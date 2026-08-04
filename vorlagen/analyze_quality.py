@@ -3,8 +3,8 @@
 und Bewegung (Frame-Differenz) pruefen. Findet Segmente, deren aktiver Winkel
 auffaellig schlechter ist als der Kamera-Normalwert."""
 import subprocess, json, numpy as np, sys
-MP4=r"C:\Users\you\AppData\Local\Temp\claude\C--claude\d77fb14d-1b80-456d-9d02-6b368742b11b\scratchpad\mc_check.mp4"
-PLAN=json.load(open(r"C:\claude\resolve-prep\projekt-a\cut_plan.json",encoding="utf-8"))
+MP4=r"C:\Users\<benutzer>\AppData\Local\Temp\claude\C--claude\d77fb14d-1b80-456d-9d02-6b368742b11b\scratchpad\mc_check.mp4"
+PLAN=json.load(open(r"C:\claude\resolve-prep\Projekt-A\cut_plan.json",encoding="utf-8"))
 FPSs=4; W,H=480,270           # Sample-fps und Analyse-Groesse
 CAMLEN={"nah":196207,"weit":196440}; FPS=30000/1001
 

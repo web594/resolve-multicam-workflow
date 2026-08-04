@@ -10,8 +10,8 @@ for d in _nv:
     except Exception: pass
 from faster_whisper import WhisperModel
 
-WAV = r"C:\claude\resolve-prep\projekt-b\audio16k.wav"
-OUT = r"C:\claude\resolve-prep\projekt-b"
+WAV = r"C:\claude\resolve-prep\Projekt-B\audio16k.wav"
+OUT = r"C:\claude\resolve-prep\Projekt-B"
 
 t0 = time.time()
 print("lade large-v3 auf CUDA...", flush=True)

@@ -11,14 +11,14 @@ os.environ.setdefault("RESOLVE_SCRIPT_LIB", r"C:\Program Files\Blackmagic Design
 sys.path.append(os.path.join(os.environ["RESOLVE_SCRIPT_API"], "Modules"))
 import DaVinciResolveScript as dvr
 
-NAME = "260709 Projekt-B"
+NAME = "Projekt-B-1"
 FPS = 30000/1001
 MC0 = 829                       # Multicam-Frame 0 == ton-Frame 829 (Start-TC 01:00:27:19)
-OFF  = json.load(open(r"C:\claude\resolve-prep\projekt-b\offsets.json", encoding="utf-8"))["sources"]
-PLAN = json.load(open(r"C:\claude\resolve-prep\projekt-b\cut_plan.json", encoding="utf-8"))
+OFF  = json.load(open(r"C:\claude\resolve-prep\Projekt-B\offsets.json", encoding="utf-8"))["sources"]
+PLAN = json.load(open(r"C:\claude\resolve-prep\Projekt-B\cut_plan.json", encoding="utf-8"))
 CAMS = ("weit", "seite"); FOFF = {a: OFF[a]["frames"] for a in CAMS}
-DRT  = r"C:\claude\resolve-prep\projekt-b\mcbuild\scaffold.drt"
-SEQ  = r"C:\claude\resolve-prep\projekt-b\mcbuild\schnitt_seq.json"
+DRT  = r"C:\claude\resolve-prep\Projekt-B\mcbuild\scaffold.drt"
+SEQ  = r"C:\claude\resolve-prep\Projekt-B\mcbuild\schnitt_seq.json"
 
 proj = dvr.scriptapp("Resolve").GetProjectManager().GetCurrentProject()
 mp = proj.GetMediaPool(); root = mp.GetRootFolder()
@@ -37,7 +37,7 @@ def cam_vidlen(name):
 CAMLEN = {a: cam_vidlen(f"{NAME} {a}") for a in CAMS}
 WIN = {a: (FOFF[a], FOFF[a] + CAMLEN[a]) for a in CAMS}
 
-# --- identische mrg-Liste wie apply_cut_projekt-b.py ---
+# --- identische mrg-Liste wie apply_cut_Projekt-B.py ---
 def other(a): return "seite" if a == "weit" else "weit"
 def avail(a, s, e): return WIN[a][0] <= s and e <= WIN[a][1]
 raw = []

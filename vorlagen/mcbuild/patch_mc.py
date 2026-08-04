@@ -5,9 +5,9 @@ Angle 2 = weit ('2'/0x32). Nur die eine Timeline-XML wird ersetzt, Rest 1:1.
 Ausgabe: patched.drt + Verifikation der Ziffernverteilung."""
 import zipfile, re, json, os
 
-SRC = r"C:\claude\resolve-prep\projekt-b\mcbuild\scaffold.drt"
-OUT = r"C:\claude\resolve-prep\projekt-b\mcbuild\patched.drt"
-SEQ = json.load(open(r"C:\claude\resolve-prep\projekt-b\mcbuild\schnitt_seq.json", encoding="utf-8"))
+SRC = r"C:\claude\resolve-prep\Projekt-B\mcbuild\scaffold.drt"
+OUT = r"C:\claude\resolve-prep\Projekt-B\mcbuild\patched.drt"
+SEQ = json.load(open(r"C:\claude\resolve-prep\Projekt-B\mcbuild\schnitt_seq.json", encoding="utf-8"))
 cams = SEQ["cams"]
 PAT = "4b616d657261c2a0"                 # 'Kamera' + NBSP
 DIGIT = {"seite": "31", "weit": "32"}    # Angle 1 = seite, Angle 2 = weit

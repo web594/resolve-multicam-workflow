@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Look als GETEILTE Nodes via Color Group (Projekt-A).
-Group Pre-Clip (geteilt): Sony->ARRI. Clip-Eprojekt-d (pro Kamera): Korrektur.
+Group Pre-Clip (geteilt): Sony->ARRI. Clip-Ebene (pro Kamera): Korrektur.
 Group Post-Clip (geteilt): Rec709->LogC, Filmstock, Kino.
 Schritt 1 hier: Gruppe anlegen, alle 12 Quell-Clips zuordnen, Clip-Grades platten,
 Pre-Clip-LUT setzen. Post-Clip-Nodes (3) werden per GUI ergaenzt, dann LUTs gesetzt."""
@@ -21,14 +21,14 @@ grp=proj.AddColorGroup(GRP)
 print("Gruppe:", grp.GetName())
 
 clips=[]
-for tln in ("260626 Projekt-A nah import","260626 Projekt-A weit import"):
+for tln in ("JJMMTT Vorname Projekt-A nah import","JJMMTT Vorname Projekt-A weit import"):
     t=byname[tln]
     for it in t.GetItemListInTrack("video",1):
         clips.append(it)
 print("Quell-Clips:", len(clips))
 
 for it in clips:
-    it.GetNodeGraph().ResetAllGrades()        # Clip-Eprojekt-d platten (Look kommt in die Gruppe)
+    it.GetNodeGraph().ResetAllGrades()        # Clip-Ebene platten (Look kommt in die Gruppe)
     ok=it.AssignToColorGroup(grp)
 print("zugeordnet + Clip-Grades geplattet")
 

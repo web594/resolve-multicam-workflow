@@ -5,9 +5,9 @@ Angle 2 = weit ('2'/0x32). Nur die Timeline-XML wird ersetzt, Rest 1:1."""
 import zipfile, re, json, os
 from collections import Counter
 
-SRC = r"C:\claude\resolve-prep\projekt-a\mcbuild\scaffold.drt"
-OUT = r"C:\claude\resolve-prep\projekt-a\mcbuild\patched.drt"
-SEQ = json.load(open(r"C:\claude\resolve-prep\projekt-a\mcbuild\schnitt_seq.json", encoding="utf-8"))
+SRC = r"C:\claude\resolve-prep\Projekt-A\mcbuild\scaffold.drt"
+OUT = r"C:\claude\resolve-prep\Projekt-A\mcbuild\patched.drt"
+SEQ = json.load(open(r"C:\claude\resolve-prep\Projekt-A\mcbuild\schnitt_seq.json", encoding="utf-8"))
 cams = SEQ["cams"]
 PAT = "4b616d657261c2a0"                 # 'Kamera' + NBSP
 DIGIT = {"nah": "31", "weit": "32"}      # Angle 1 = nah, Angle 2 = weit

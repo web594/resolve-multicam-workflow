@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Projekt '260709 Projekt-B' anlegen: Import, Bins, und pro Kamera eine
+"""Projekt 'Projekt-B-1' anlegen: Import, Bins, und pro Kamera eine
 Quell-Timeline. Wie Projekt-C: Tascab lief VOR den Kameras (Offsets positiv),
 daher Video ab Frame 0 (kein Trim) und Hauptton am Kopf um offset getrimmt, damit
 Ton auf der Quell-Timeline zum Bild passt. Start-TC = 01:00:00:00 + offset (gemeinsame
@@ -10,9 +10,9 @@ os.environ.setdefault("RESOLVE_SCRIPT_LIB", r"C:\Program Files\Blackmagic Design
 sys.path.append(os.path.join(os.environ["RESOLVE_SCRIPT_API"], "Modules"))
 import DaVinciResolveScript as dvr
 
-ROOT = r"E:\260709 Projekt-B"
-NAME = "260709 Projekt-B"
-OFF  = json.load(open(r"C:\claude\resolve-prep\projekt-b\offsets.json", encoding="utf-8"))["sources"]
+ROOT = r"E:\Projekt-B-1"
+NAME = "Projekt-B-1"
+OFF  = json.load(open(r"C:\claude\resolve-prep\Projekt-B\offsets.json", encoding="utf-8"))["sources"]
 
 CAMS = {
     "weit":  [os.path.join(ROOT, "weit",  f"SHOGUNU_S001_S001_T019_0{i}.MOV") for i in range(2)],

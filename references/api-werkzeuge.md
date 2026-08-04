@@ -7,7 +7,7 @@ und sollte bei Detailfragen gelesen werden. Hier die Kurzfassung.
 Voraussetzung: Resolve läuft; Einstellungen → System → Allgemein → „Externes Scripting" = **Lokal**.
 `scriptapp("Resolve")` liefert `None` → **Resolve komplett neu starten** (typisch nach Updates).
 
-## Eprojekt-d 1 — offizielle API als CLI: `rctl.py`
+## Ebene 1 — offizielle API als CLI: `rctl.py`
 
 ```
 py C:\claude\resolve-ctl\rctl.py            # Hilfe, alle Befehle
@@ -31,7 +31,7 @@ import DaVinciResolveScript as dvr
 resolve = dvr.scriptapp("Resolve")
 ```
 
-## ★ Eprojekt-d 2 — Grading-Werte nativ setzen und lesen
+## ★ Ebene 2 — Grading-Werte nativ setzen und lesen
 
 Der Durchbruch vom 19.07.2026: Claude schreibt in **alle Zahlenfelder des Primaries-Panels**
 (Werte stehen danach sichtbar drin) und liest sie zurück.
@@ -54,7 +54,7 @@ Technik: DRX-Body patchen (`drxlib.py`) → `Graph.ApplyGradeFromDRX`; Lesen aus
 Nach Resolve-Updates neu kalibrieren: `calibrate_drx.py` / `refine_cal.py`
 im Testprojekt „zz claude api-probe (loeschbar)", Timeline `cal-tl` mit `cal_ramp.mp4`.
 
-## Eprojekt-d 3 — Nodes und Tastatur
+## Ebene 3 — Nodes und Tastatur
 
 - **Color-Nodes anlegen UND verbinden:** `rctl node-add serial|parallel|layer|outside`
   (Alt+S/P/L/O; Mixer entstehen automatisch). Einfügepunkt = aktuell gewählter Node,
@@ -89,7 +89,7 @@ Fallstricke dazu in `fallstricke.md` (Expression vs. Value, Comp-Zeiten, Mark re
 
 ## Prozent-Zähler / animierte Zahlen
 
-0 %→100 %-Zähler per **einen Titel-/Text-Ausdruck in der Fusion-Konsole** (Makros gehen nicht).
+0 %→100 %-Zähler per **Text+ StyledText-Ausdruck in der Fusion-Konsole** (Makros gehen nicht).
 Clip framegenau trimmen und verifizieren. Siehe Memory `fusion-prozent-zaehler-technik`.
 
 ## ★ OFX auf Nodes setzen + Parameter patchen (gelöst 20.07.2026)
@@ -113,8 +113,8 @@ siehe `fallstricke.md`) → `pm.SaveProject()` → Body aus der DB ziehen.
 
 | Nicht per API | Ersatzweg |
 |---|---|
-| Multicam-Clip erzprojekt-c | von Hand in der GUI (Perspektivensync = Timecode) |
-| Multicam-Winkel schalten | Bulk-Bau: DRT exportieren → Kamera-Byte patchen → reimportieren (`mcbuild/`). Einzeln nachträglich: Edit-Seite Clip anwählen → Rechtsklick → „Multicam-Perspektive wechseln" → Angle N (GUI, nicht-destruktiv, funktioniert) |
+| Multicam-Clip erzeugen (kein `CreateMultiCamClip` in der API) | ⭐ **GELÖST 27.07.2026 — per DRT-Bau, ohne GUI:** `vorlagen/mcbuild/build_mc_drt.py` schreibt `<Sm2MpMulticamClip>` + Definitionscontainer (ein Track je Kamera, `UserDefinedName`=„Angle N", `MediaRef`=DbId der Quell-Timeline) ins DRT → `ImportTimelineFromFile`. **UUIDs des Musters beibehalten** (Container-Zuordnung steckt UTF-16-kodiert in den zstd-Blobs von `MpFolder.xml`), sonst `Frames 0`. Details: `ablauf.md` Schritt 6 |
+| Multicam-Winkel schalten | Bulk-Bau: Winkelziffer im `FieldsBlob` der Schnittclips (hinter `4b616d657261c2a0`, `31`/`32`) — erledigt `build_mc_drt.py` gleich mit. Einzeln nachträglich: Edit-Seite Clip anwählen → Rechtsklick → „Multicam-Perspektive wechseln" → Angle N (GUI, nicht-destruktiv) |
 | Audio-Sync / „Sound-Sync" | eigene ffmpeg-Kreuzkorrelation (`vorlagen/sync.py`) |
 | Bestimmten vorhandenen Color-Node auswählen | Computer-Use |
 | Sonderverdrahtung (Key-Ausgang → Maske) | Computer-Use |
