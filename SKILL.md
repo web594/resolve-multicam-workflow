@@ -177,41 +177,48 @@ fertigen, gegradeten Multicam-Schnitt mit Titel **selbstständig** an.
     30-m-Steinturm über „so einen Thema-Y baut ihr im Garten" — der Zuschauer denkt dann,
     er müsse das bauen. Faustregel: Ein Foto nur dort, wo der Ton es **deckt**; wenn keine
     Passage passt, das Bild **weglassen** und für die Folge aufheben, in der er darüber spricht.
-14. **⭐ Dateinamen erzeugter Dateien — drei feste Regeln, ausnahmslos für alle Projekte**
-    (Nutzer, 3.8.2026, nach mehrfachem Verstoß bei `instagram_kurz.py`):
-    (a) Aus dem Namen muss hervorgehen, zu **welchem Film/Projekt** die Datei gehört — ein Film
-    für ein anderes Projekt/eine andere Folge MUSS anders heißen. „Instagram Kurz #4" reicht
-    NICHT (könnte alles sein).
-    (b) **Hat die Quelldatei einen GUTEN Namen, wird er übernommen** — Claudes Zusatz kommt
-    HINTEN dran, nichts wird ersetzt: `<Quellname unveraendert> <Zusatz>.<ext>`, z. B.
-    `#4 Thema-X, Kurz 1.1 15t.mp4` → `#4 Thema-X, Kurz 1.1 15t Instagram (Text, Musik, -14 LUFS).mp4`.
-    (c) **Immer eine Versionsnummer/-kennung**, damit ein alter Stand nicht mit einem neuen
-    verwechselt wird — steckt schon eine in der Quelle, reicht die, sonst `v1`/`v2` anhängen.
-    (c2) ⭐ **FILME tragen vorne das Projektdatum** (Nutzer, 4.8.2026): der sechsstellige
-    Projektcode `JJMMTT` aus dem Projektordner steht **am Anfang** des Dateinamens, damit der
-    Film beim Suchen wieder dem Projekt zuzuordnen ist:
-    `JJMMTT #5 Thema-Y, Kurz 1.1 15t Instagram (Text, Musik, -14 LUFS).mp4`. Fehlt er in der
-    Quelle, wird er vorangestellt — `instagram_kurz.py` macht das automatisch (Projektcode per
+14. **⭐ Dateinamen-Konvention — sechs feste Regeln, ausnahmslos für alle Projekte**
+    (Nutzer, 3./4.8.2026, nach mehrfachem Verstoß bei `instagram_kurz.py` und `make_thumb_*.py`).
+    Leitfrage: **Erkennt ein Kollege allein am Dateinamen, zu welchem Projekt/welcher Folge die
+    Datei gehört und welcher Stand sie ist?**
+
+    (a) **Projekt-/Folgenzuordnung muss im Namen stehen.** Ein Film für ein anderes Projekt oder
+    eine andere Folge MUSS anders heißen. „Instagram Kurz #4" reicht NICHT (könnte alles sein).
+
+    (b) ⭐ **FILME tragen vorne das Projektdatum.** Der sechsstellige Projektcode `JJMMTT` aus dem
+    Projektordner steht **am Anfang** des Dateinamens — daran findet man den Film beim Suchen
+    wieder: `JJMMTT #5 Thema-Y, Kurz 1.1 15t Instagram (Text, Musik, -14 LUFS).mp4`. Fehlt er in
+    der Quelle, wird er vorangestellt; `instagram_kurz.py` macht das automatisch (Projektcode per
     Regex `[\\/](\d{6})[ _-]` aus dem Pfad).
-    (d) ⭐ **Kryptische Zwischenprodukt-Namen NICHT weiterschleppen** (Nutzer, 4.8.2026).
-    Ein Resolve-Standbild heißt z. B. `Standbild 2026-08-03 170627 für tb 1_2.1.1.png` — daraus
-    darf **kein** Titelbildname werden. Für **Enddateien** (Titelbilder, Grafiken, Videos, Texte)
-    den Namen **neu bilden**: `<Projektname/Folge> <Art der Datei> <Details> <Version>`, z. B.
-    `Titelbild #5 Thema-Y v2_4K.jpg`. Für das **Zwischenprodukt selbst** ist ein Datums-/Zeitname
-    noch in Ordnung, solange es im zugehörigen `renderings`-Ordner liegt (dann ist die Zuordnung
-    aus dem Ordner erschließbar) — für Enddateien nicht.
-    (e) ⛔ **Nur EIGENE Dateien umbenennen** (Nutzer, 4.8.2026): Die Regeln gelten für Dateien,
-    die Claude selbst erzeugt — dort **gleich beim Anlegen** einen guten Namen vergeben.
-    **Vom Nutzer erzeugte Dateien** (Renderings, Standbilder, KI-Bilder) **nicht umbenennen**,
-    auch nicht „aufräumend" oder um einen Tippfehler zu beheben — nur auf ausdrückliche Bitte.
-    Ist ein Quellname schlecht: die eigene Ergebnisdatei gut benennen, die Quelle in Ruhe lassen
-    (und sie im Skript per **Namensfragment** finden, nicht hart eintippen — Resolve-Standbilder
-    enthalten z. B. ein geschütztes Leerzeichen, Zeichen 160).
-    Regel im Zweifel: Erkennt ein Kollege **allein am Dateinamen** Projekt/Folge und Stand?
-    → Also in `instagram_kurz.py` (Quelle = fertiger Film) den Ausgabenamen aus der Quelle
-    ableiten (`os.path.splitext(quelle)[0] + " <Zusatz>"`), in `make_thumb_*.py`
-    (Quelle = Standbild) dagegen `OUTNAME` als sprechenden Namen setzen — nie fest verdrahtete
-    generische Namen, aber auch nie den kryptischen Standbildnamen übernehmen.
+
+    (c) **Guten Quellnamen übernehmen, Zusatz hinten anhängen** — nichts ersetzen:
+    `<Quellname unveraendert> <Zusatz>.<ext>`, z. B. `#4 Thema-X, Kurz 1.1 15t.mp4` →
+    `#4 Thema-X, Kurz 1.1 15t Instagram (Text, Musik, -14 LUFS).mp4`.
+
+    (d) **Immer eine Versionsnummer/-kennung**, damit ein alter Stand nicht mit einem neuen
+    verwechselt wird — steckt schon eine in der Quelle, reicht die, sonst `v1`/`v2` anhängen.
+
+    (e) ⭐ **Kryptische Zwischenprodukt-Namen NICHT weiterschleppen.** Ein Resolve-Standbild heißt
+    z. B. `Standbild 2026-08-03 170627 für tb 1_2.1.1.png` — daraus darf **kein** Titelbildname
+    werden. **Enddateien** (Titelbilder, Grafiken, Videos, Texte) bekommen einen **neu gebildeten**
+    Namen: `<Projektname/Folge> <Art der Datei> <Details> <Version>`, z. B.
+    `Titelbild #5 Thema-Y v2_4K.jpg`. Beim **Zwischenprodukt selbst** ist ein Datums-/Zeitname noch
+    in Ordnung, solange es im zugehörigen `renderings`-Ordner liegt (dann ist die Zuordnung aus dem
+    Ordner erschließbar) — bei Enddateien nicht.
+
+    (f) ⛔ **Nur EIGENE Dateien umbenennen.** Die Regeln gelten für Dateien, die Claude selbst
+    erzeugt — dort **gleich beim Anlegen** einen guten Namen vergeben. **Vom Nutzer erzeugte
+    Dateien** (Renderings, Standbilder, KI-Bilder) **nicht umbenennen**, auch nicht „aufräumend"
+    oder um einen Tippfehler zu beheben — nur auf ausdrückliche Bitte. Ist ein Quellname schlecht:
+    die eigene Ergebnisdatei gut benennen und die Quelle in Ruhe lassen. Solche Quellen im Skript
+    per **Namensfragment** suchen statt hart eintippen — Resolve-Standbilder enthalten z. B. ein
+    **geschütztes Leerzeichen (Zeichen 160)**, ein getippter Pfad scheitert daran.
+
+    **Praktisch in den Skripten:** `instagram_kurz.py` (Quelle = fertiger Film) leitet den
+    Ausgabenamen aus der Quelle ab (`os.path.splitext(quelle)[0] + " <Zusatz>"`) und stellt das
+    Projektdatum voran; `make_thumb_*.py` (Quelle = Standbild) setzt `OUTNAME` als sprechenden
+    Namen und sucht die Quelle über ein `MATCH`-Fragment — nie fest verdrahtete generische Namen,
+    aber auch nie den kryptischen Standbildnamen übernehmen.
 
 **Nur das noch beim Nutzer lassen:**
 - Die **subjektive Helligkeits-/Richtungsfeinheit**: Mitte-Frame zeigen, kurz „heller/dunkler?".

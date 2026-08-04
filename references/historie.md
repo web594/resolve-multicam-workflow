@@ -2,6 +2,17 @@
 
 Kurz eintragen: Datum — was geändert — warum. Neueste oben.
 
+## 2026-08-05 — Dateinamen-Konvention aufgeräumt: sechs Regeln (a)–(f)
+Regel 14 hieß noch „drei feste Regeln", war aber auf sechs gewachsen. Jetzt durchnummeriert
+(a)–(f) mit einer Leitfrage vorneweg (*Erkennt ein Kollege allein am Dateinamen Projekt/Folge
+und Stand?*). Neu bzw. geschärft:
+- (b) **Filme tragen vorne das Projektdatum `JJMMTT`** aus dem Projektordner.
+- (f) ⛔ **Nur eigene Dateien umbenennen** — vom Nutzer erzeugte Dateien (Renderings,
+  Standbilder, KI-Bilder) bleiben unangetastet, auch bei Tippfehlern; stattdessen der eigenen
+  Ergebnisdatei gleich beim Anlegen einen guten Namen geben und die Quelle im Skript per
+  **Namensfragment** ansprechen (Resolve-Standbilder enthalten ein geschütztes Leerzeichen,
+  Zeichen 160 — ein getippter Pfad scheitert daran).
+
 ## 2026-08-04 (4) — Dateinamen: Zwischenprodukt-Namen nicht weiterschleppen (Nutzer-Auftrag)
 Ergänzung zu Regel 14 (SKILL.md) und `fallstricke.md`: Ein Dateiname muss **erstens dem Projekt**
 zuzuordnen sein, **dann** Details und Version tragen. Deshalb gilt jetzt beides:
