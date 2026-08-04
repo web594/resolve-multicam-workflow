@@ -182,14 +182,23 @@ fertigen, gegradeten Multicam-Schnitt mit Titel **selbstständig** an.
     (a) Aus dem Namen muss hervorgehen, zu **welchem Film/Projekt** die Datei gehört — ein Film
     für ein anderes Projekt/eine andere Folge MUSS anders heißen. „Instagram Kurz #4" reicht
     NICHT (könnte alles sein).
-    (b) **Hat die Quelldatei schon einen Namen, wird er übernommen** — Claudes Zusatz kommt
+    (b) **Hat die Quelldatei einen GUTEN Namen, wird er übernommen** — Claudes Zusatz kommt
     HINTEN dran, nichts wird ersetzt: `<Quellname unveraendert> <Zusatz>.<ext>`, z. B.
     `#4 Thema-X, Kurz 1.1 15t.mp4` → `#4 Thema-X, Kurz 1.1 15t Instagram (Text, Musik, -14 LUFS).mp4`.
     (c) **Immer eine Versionsnummer/-kennung**, damit ein alter Stand nicht mit einem neuen
     verwechselt wird — steckt schon eine in der Quelle, reicht die, sonst `v1`/`v2` anhängen.
-    In Skripten (`instagram_kurz.py`, `make_thumb_*.py`) den Ausgabenamen IMMER per
-    `os.path.splitext(quelle)[0] + " <Zusatz>"` aus der Quelle ableiten, nie fest verdrahten.
-    Details/Beispiele im Memory `dateinamen-konvention`.
+    (d) ⭐ **Kryptische Zwischenprodukt-Namen NICHT weiterschleppen** (Nutzer, 4.8.2026).
+    Ein Resolve-Standbild heißt z. B. `Standbild 2026-08-03 170627 für tb 1_2.1.1.png` — daraus
+    darf **kein** Titelbildname werden. Für **Enddateien** (Titelbilder, Grafiken, Videos, Texte)
+    den Namen **neu bilden**: `<Projektname/Folge> <Art der Datei> <Details> <Version>`, z. B.
+    `Titelbild #5 Thema-Y v2_4K.jpg`. Für das **Zwischenprodukt selbst** ist ein Datums-/Zeitname
+    noch in Ordnung, solange es im zugehörigen `renderings`-Ordner liegt (dann ist die Zuordnung
+    aus dem Ordner erschließbar) — für Enddateien nicht.
+    Regel im Zweifel: Erkennt ein Kollege **allein am Dateinamen** Projekt/Folge und Stand?
+    → Also in `instagram_kurz.py` (Quelle = fertiger Film) den Ausgabenamen aus der Quelle
+    ableiten (`os.path.splitext(quelle)[0] + " <Zusatz>"`), in `make_thumb_*.py`
+    (Quelle = Standbild) dagegen `OUTNAME` als sprechenden Namen setzen — nie fest verdrahtete
+    generische Namen, aber auch nie den kryptischen Standbildnamen übernehmen.
 
 **Nur das noch beim Nutzer lassen:**
 - Die **subjektive Helligkeits-/Richtungsfeinheit**: Mitte-Frame zeigen, kurz „heller/dunkler?".

@@ -2,6 +2,30 @@
 
 Kurz eintragen: Datum — was geändert — warum. Neueste oben.
 
+## 2026-08-04 (4) — Dateinamen: Zwischenprodukt-Namen nicht weiterschleppen (Nutzer-Auftrag)
+Ergänzung zu Regel 14 (SKILL.md) und `fallstricke.md`: Ein Dateiname muss **erstens dem Projekt**
+zuzuordnen sein, **dann** Details und Version tragen. Deshalb gilt jetzt beides:
+- Quelle ist ein **fertiger Film mit gutem Namen** → Namen übernehmen, Zusatz hinten dran.
+- Quelle ist ein **Zwischenprodukt mit kryptischem Namen** (Resolve-Standbild
+  `Standbild 2026-08-03 170627 für tb 1_2.1.1.png`) → Namen **neu bilden**:
+  `<Projekt/Folge> <Art> <Details> <Version>`.
+  Beim Zwischenprodukt selbst ist ein Datums-/Zeitname noch okay, wenn es im zugehörigen
+  `renderings`-Ordner liegt; bei Enddateien (Titelbilder, Grafiken, Videos, Texte) nicht.
+Praktisch: `instagram_kurz.py` leitet den Namen aus der Quelle ab, `make_thumb_*.py` setzt
+`OUTNAME` sprechend.
+
+## 2026-08-04 (3) — Blenden als Alpha, 4K-Standbild, AppendToTimeline-Off-by-one
+Aus der Nacharbeit an einer Folge mit Grafik-Overlays in `fallstricke.md` ergänzt bzw. korrigiert:
+- **Weiche Blenden für Overlays per ffmpeg als Alpha einbacken** (ProRes 4444) statt
+  Opacity-Keyframes zu klicken — spart die unzuverlässige Inspector-Arbeit und zittert nicht.
+- **4K-Standbild aus einer 1080p-Timeline** über kurzzeitiges Umstellen der Timeline-Auflösung
+  + `GrabStill`/`ExportStills` — für scharfe Titelbilder.
+- **`AppendToTimeline`: `endFrame` ist die Dauer**, nicht Dauer−1 (war 1 Frame zu kurz).
+- Zwei alte Notizen widerlegt: `rctl.py frame` zeigt Overlays oberer Spuren **doch**;
+  `ExportStills` lief zuverlässig.
+- Bestätigt: **Ripple-Einfügen (Kaltstart) bleibt beim Nutzer** — die Aufnahmezeiten liegen
+  zstd-komprimiert in den DRT-Blobs, dafür gibt es keinen sicheren Skriptweg.
+
 ## 2026-08-04 (2) — ⭐ Vorbild-Projekt festgehalten (Nutzer-Auftrag)
 Der Nutzer hat den Stand von `Projekt-B-3` (2 Kameras + Hauptton) ausdrücklich als
 **Vorbild für Multicam-Projekte** freigegeben. Neu `references/vorbild-projekt.md`:

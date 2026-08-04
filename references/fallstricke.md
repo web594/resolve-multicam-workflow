@@ -237,10 +237,17 @@ das Experiment fast scheitern ließen:
 - **⭐ Zoom-Sicherheit gilt für BILD, nicht nur für Text.** Ein 110 %-Zoom schneidet je Rand
   4,55 % ab; eine KI-Illustration, die bis an die Kante reicht, verliert Kopf und Füße.
   Prüfen mit `overlay_tools.py check`, reparieren mit `overlay_tools.py zoomsafe`.
-- **⭐ Erzeuger-Skripte NIE mit fest verdrahtetem Ausgabenamen schreiben** (z. B. `"Instagram Kurz %s" % titel`
-  → verwechselbar mit anderen Projekten). Immer `basis = os.path.splitext(quelle)[0]` und daraus
-  `f"{basis} <Zusatz>.<ext>"` bilden — siehe [[dateinamen-konvention]], SKILL.md Punkt 14.
+- **⭐ Erzeuger-Skripte NIE mit fest verdrahtetem GENERISCHEM Ausgabenamen schreiben** (z. B.
+  `"Instagram Kurz %s" % titel` → verwechselbar mit anderen Projekten). Ist die Quelle ein
+  fertiger Film, `basis = os.path.splitext(quelle)[0]` nehmen und daraus `f"{basis} <Zusatz>.<ext>"`
+  bilden — siehe SKILL.md Punkt 14.
   Bereits vorhandene generische Namen auf Wunsch umbenennen (behalten, nicht löschen).
+- **⭐ Umgekehrter Fall: kryptische Standbildnamen NICHT in den Titelbildnamen übernehmen**
+  (Nutzer, 4.8.2026). `Standbild 2026-08-03 170627 für tb 1_2.1.1.png` ist als Quelle in Ordnung,
+  als Titelbildname nicht. Enddateien (Titelbilder, Grafiken, Videos, Texte) heißen
+  `<Projekt/Folge> <Art> <Details> <Version>` — in `make_thumb_*.py` also `OUTNAME` sprechend
+  setzen, nicht aus dem Standbildnamen ableiten. Kurz: Quelle = guter Name → übernehmen;
+  Quelle = Zwischenprodukt → Namen neu bilden.
 - **⭐ Titelbild: NIE Text über Kopf/Stirn/Gesicht der Hauptperson** (Hintergrundpersonen ok).
   Zweimal übersehen worden (#2, #4), obwohl Memory [[titelbild-kopf-freihalten]] es sagt — daher
   **vor dem Rendern des Titelbilds hier nachlesen** und das Ergebnis **immer ansehen**. `make_thumb`
@@ -251,8 +258,25 @@ das Experiment fast scheitern ließen:
   (verifiziert 3.8.2026): MediaPool-Item **relinken** — `mp.RelinkClips([clip], r"<ordner>")`;
   der Timeline-Clip aktualisiert sich sofort, kein Löschen/Neu-Importieren nötig. (Manchmal zeigt
   Resolve die neue Version auch ohne Zutun — erst per `rctl.py frame` prüfen.)
-- **`rctl.py frame` zeigt Overlays oberer Spuren NICHT** (nur die Color-Ebene) — zum Prüfen
-  den Resolve-Viewer per Screenshot ansehen.
+- **`rctl.py frame` zeigt Overlays oberer Spuren DOCH** (verifiziert 4.8.2026: Endkarte und
+  Lower-Third auf der Overlay-Spur waren im PNG drin, inkl. Alpha-Blende) — Platzierungen und
+  Blenden lassen sich damit prüfen, ohne dem Nutzer den Bildschirmfokus zu nehmen.
+  (Ältere Notiz „zeigt Overlays nicht" war falsch.)
+- **⭐ Weiche Blenden für Overlays als ALPHA einbacken** statt Opacity-Keyframes zu klicken
+  (4.8.2026): `ffmpeg -i g.mov -vf "format=yuva444p10le,fade=t=in:st=0:d=<s>:alpha=1,
+  fade=t=out:st=<dauer-aus>:d=<s>:alpha=1" -c:v prores_ks -profile:v 4444 -pix_fmt yuva444p10le`.
+  Wirkt auch bei Vollbild-Grafiken als echte Überblendung auf das Bild darunter. Anders als
+  `zoompan` zittert das nicht — Blenden einbacken ist erlaubt, Zoom nicht. Prüfen: je Frame den
+  Alpha-Mittelwert messen (Pillow, `im.split()[3]`).
+- **⭐ `AppendToTimeline`: `endFrame` = gewünschte Dauer, NICHT Dauer−1** (4.8.2026 gemessen).
+  Mit `startFrame: 0, endFrame: 268` entsteht ein 268-Frame-Clip; für 269 Frames `endFrame: 269`.
+  Danach immer `GetStart/GetEnd/GetDuration` gegenprüfen.
+- **⭐ 4K-Standbild aus einer 1080p-Timeline** (für Titelbilder): Timeline kurz umstellen —
+  `tl.SetSetting("useCustomSettings","1")`, `timelineResolutionWidth/Height` auf 3840/2160 —,
+  dann `resolve.OpenPage("color")`, `tl.GrabStill()`,
+  `proj.GetGallery().GetCurrentStillAlbum().ExportStills([still], ordner, name, "png")`,
+  Still löschen und die Auflösung zurückstellen. Liefert echte 4K-Schärfe, wenn das
+  Quellmaterial 4K ist. (`ExportStills` lief dabei zuverlässig.)
 - **libass:** beim Einbrennen von ASS-Untertiteln **kein `fontsdir`** angeben, sonst fällt es
   auf eine Ersatzschrift zurück (mit `fontsdir=.` + `Bold=-1` reproduzierbar falsch).
 - **ffmpeg-Filter-Expressions:** keine Kommas und kein `pow()` benutzen (bricht die
