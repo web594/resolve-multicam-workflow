@@ -187,6 +187,12 @@ fertigen, gegradeten Multicam-Schnitt mit Titel **selbstständig** an.
     `#4 Thema-X, Kurz 1.1 15t.mp4` → `#4 Thema-X, Kurz 1.1 15t Instagram (Text, Musik, -14 LUFS).mp4`.
     (c) **Immer eine Versionsnummer/-kennung**, damit ein alter Stand nicht mit einem neuen
     verwechselt wird — steckt schon eine in der Quelle, reicht die, sonst `v1`/`v2` anhängen.
+    (c2) ⭐ **FILME tragen vorne das Projektdatum** (Nutzer, 4.8.2026): der sechsstellige
+    Projektcode `JJMMTT` aus dem Projektordner steht **am Anfang** des Dateinamens, damit der
+    Film beim Suchen wieder dem Projekt zuzuordnen ist:
+    `JJMMTT #5 Thema-Y, Kurz 1.1 15t Instagram (Text, Musik, -14 LUFS).mp4`. Fehlt er in der
+    Quelle, wird er vorangestellt — `instagram_kurz.py` macht das automatisch (Projektcode per
+    Regex `[\\/](\d{6})[ _-]` aus dem Pfad).
     (d) ⭐ **Kryptische Zwischenprodukt-Namen NICHT weiterschleppen** (Nutzer, 4.8.2026).
     Ein Resolve-Standbild heißt z. B. `Standbild 2026-08-03 170627 für tb 1_2.1.1.png` — daraus
     darf **kein** Titelbildname werden. Für **Enddateien** (Titelbilder, Grafiken, Videos, Texte)
