@@ -200,6 +200,13 @@ fertigen, gegradeten Multicam-Schnitt mit Titel **selbstständig** an.
     `Titelbild #5 Thema-Y v2_4K.jpg`. Für das **Zwischenprodukt selbst** ist ein Datums-/Zeitname
     noch in Ordnung, solange es im zugehörigen `renderings`-Ordner liegt (dann ist die Zuordnung
     aus dem Ordner erschließbar) — für Enddateien nicht.
+    (e) ⛔ **Nur EIGENE Dateien umbenennen** (Nutzer, 4.8.2026): Die Regeln gelten für Dateien,
+    die Claude selbst erzeugt — dort **gleich beim Anlegen** einen guten Namen vergeben.
+    **Vom Nutzer erzeugte Dateien** (Renderings, Standbilder, KI-Bilder) **nicht umbenennen**,
+    auch nicht „aufräumend" oder um einen Tippfehler zu beheben — nur auf ausdrückliche Bitte.
+    Ist ein Quellname schlecht: die eigene Ergebnisdatei gut benennen, die Quelle in Ruhe lassen
+    (und sie im Skript per **Namensfragment** finden, nicht hart eintippen — Resolve-Standbilder
+    enthalten z. B. ein geschütztes Leerzeichen, Zeichen 160).
     Regel im Zweifel: Erkennt ein Kollege **allein am Dateinamen** Projekt/Folge und Stand?
     → Also in `instagram_kurz.py` (Quelle = fertiger Film) den Ausgabenamen aus der Quelle
     ableiten (`os.path.splitext(quelle)[0] + " <Zusatz>"`), in `make_thumb_*.py`
