@@ -21,7 +21,7 @@ grp=proj.AddColorGroup(GRP)
 print("Gruppe:", grp.GetName())
 
 clips=[]
-for tln in ("JJMMTT Vorname Projekt-A nah import","JJMMTT Vorname Projekt-A weit import"):
+for tln in ("Projekt-A Projekt-A nah import","Projekt-A Projekt-A weit import"):
     t=byname[tln]
     for it in t.GetItemListInTrack("video",1):
         clips.append(it)

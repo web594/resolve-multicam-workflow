@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""★ Multicam-Clip OHNE GUI erzeugen — komplett per DRT-Bau (Projekt-B-2, 27.07.2026).
+"""★ Multicam-Clip OHNE GUI erzeugen — komplett per DRT-Bau (Projekt-B2, 27.07.2026).
 
 Bisher galt: "Multicam-Clip erzeugen geht nur von Hand in der GUI". Das stimmt nicht.
 Ein Multicam-Clip ist im DRT nichts weiter als
@@ -21,13 +21,13 @@ Ausgang : mc_ready.drt   (Multicam-Clip + geschnittene Multicam-Timeline)
 """
 import zipfile, re, json, os, uuid, struct, binascii
 
-B      = r"C:\claude\resolve-prep\Projekt-B-2"
+B      = r"C:\claude\resolve-prep\projekt-b2"
 BASIS  = B + r"\mcbuild\neu_basis.drt"
 MUSTER = B + r"\mcbuild\alt_mc.drt"
 OUT    = B + r"\mcbuild\mc_ready.drt"
 SEQOUT = B + r"\mcbuild\schnitt_seq.json"
 
-NAME = "Projekt-B-2"
+NAME = "Projekt-B-2 Projekt-B"
 MCNAME = f"{NAME} Multicam"
 FPS = 30000 / 1001
 TCBASE = 108000
@@ -140,6 +140,18 @@ mc = re.sub(r"<Name>[^<]*</Name>", el("Name", MCNAME), mc, count=1)
 mc = re.sub(r"<MpFolder>[0-9a-f-]+</MpFolder>", el("MpFolder", master_folder), mc, count=1)
 NEW_EXT = extents(MC_START / FPS, MC_DUR / FPS)
 mc = re.sub(r"<MediaExtents>[0-9a-f]*</MediaExtents>", el("MediaExtents", NEW_EXT), mc, count=1)
+
+# ⭐⭐ FrameRate-Feld der Muster-Sequence auf die FPS DIESES Projekts umstellen — sonst
+# rechnet Resolve die Multicam-Sequence intern mit der geerbten Muster-FPS (z.B. 29.97 aus
+# einem alten Projekt), und der Clip bricht ab einer gewissen Position SCHWARZ ab (nicht am
+# Anfang, sondern mitten drin — sieht wie ein Datenfehler aus, ist aber nur die falsche
+# Zeitbasis). Betrifft jedes Projekt, dessen FPS von der Muster-DRT abweicht (z.B. 25 vs.
+# 29.97) — nicht nur 25fps. Verifiziert Projekt-J 06.08.2026: Multicam-Clip brach bei
+# ~654s statt der echten 1510s ab, GetClipProperty('FPS') zeigte weiterhin 29.97 obwohl das
+# Projekt 25fps war. Fix: FrameRate-Hex (8-Byte little-endian double + 8 Nullbytes) IMMER auf
+# die eigene FPS umschreiben, auch wenn sie zufaellig mit dem Muster uebereinstimmt.
+NEW_FR = (struct.pack("<d", FPS) + b"\x00" * 8).hex()
+mc = re.sub(r"<FrameRate>[0-9a-f]*</FrameRate>", el("FrameRate", NEW_FR), mc, count=1)
 
 # ⭐ Der FieldsBlob des Multicam-Elements traegt eine ZWEITE Kopie der MediaExtents
 #    (zstd-komprimiert). Bleibt sie auf den Werten des Musters stehen, importiert Resolve

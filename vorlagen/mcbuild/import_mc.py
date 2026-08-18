@@ -8,9 +8,9 @@ os.environ.setdefault("RESOLVE_SCRIPT_LIB", r"C:\Program Files\Blackmagic Design
 sys.path.append(os.path.join(os.environ["RESOLVE_SCRIPT_API"], "Modules"))
 import DaVinciResolveScript as dvr
 
-NAME = "Projekt-B-1"
-DRT  = r"C:\claude\resolve-prep\Projekt-B\mcbuild\patched.drt"
-SEQ  = json.load(open(r"C:\claude\resolve-prep\Projekt-B\mcbuild\schnitt_seq.json", encoding="utf-8"))
+NAME = "Projekt-B-1 Projekt-B"
+DRT  = r"C:\claude\resolve-prep\projekt-b\mcbuild\patched.drt"
+SEQ  = json.load(open(r"C:\claude\resolve-prep\projekt-b\mcbuild\schnitt_seq.json", encoding="utf-8"))
 cams = SEQ["cams"]; first_t = SEQ["first_t"]; last_t = SEQ["last_t"]
 TLNAME = f"{NAME} Multicam Schnitt"
 ANGLE2CAM = {"1": "seite", "2": "weit"}   # aus Definitionssequenz

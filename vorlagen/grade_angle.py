@@ -8,11 +8,11 @@ os.environ.setdefault("RESOLVE_SCRIPT_LIB", r"C:\Program Files\Blackmagic Design
 sys.path.append(os.path.join(os.environ["RESOLVE_SCRIPT_API"], "Modules"))
 import DaVinciResolveScript as dvr
 
-TLNAME = sys.argv[1] if len(sys.argv)>1 else "JJMMTT Vorname Projekt-A weit import"
+TLNAME = sys.argv[1] if len(sys.argv)>1 else "Projekt-A Projekt-A weit import"
 LUTS = {1:"Sony_SLog3_to_ARRI_Rec709.cube",
-        3:"Projekt-A/Alexa Rec709 to LOG-C_Impulz.cube",
-        4:"Projekt-A/Alexa_Kodak Vis3 500T 5219 (NEG)_FPE.cube",
-        5:"Projekt-A/Projekt-C_Kino_mittel.cube"}
+        3:"projekt-a/Alexa Rec709 to LOG-C_Impulz.cube",
+        4:"projekt-a/Alexa_Kodak Vis3 500T 5219 (NEG)_FPE.cube",
+        5:"projekt-a/Projekt-C_Kino_mittel.cube"}
 NODES=6
 resolve=dvr.scriptapp("Resolve"); proj=resolve.GetProjectManager().GetCurrentProject()
 proj.RefreshLUTList()

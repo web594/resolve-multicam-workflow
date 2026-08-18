@@ -5,7 +5,7 @@ os.environ.setdefault("RESOLVE_SCRIPT_API", r"C:\ProgramData\Blackmagic Design\D
 os.environ.setdefault("RESOLVE_SCRIPT_LIB", r"C:\Program Files\Blackmagic Design\DaVinci Resolve\fusionscript.dll")
 sys.path.append(os.path.join(os.environ["RESOLVE_SCRIPT_API"], "Modules"))
 import DaVinciResolveScript as dvr
-NAME="Projekt-B-1"; FPS=30000/1001
+NAME="Projekt-B-1 Projekt-B"; FPS=30000/1001
 proj=dvr.scriptapp("Resolve").GetProjectManager().GetCurrentProject()
 tl=None
 for i in range(1,proj.GetTimelineCount()+1):

@@ -10,12 +10,12 @@ os.environ.setdefault("RESOLVE_SCRIPT_LIB", r"C:\Program Files\Blackmagic Design
 sys.path.append(os.path.join(os.environ["RESOLVE_SCRIPT_API"], "Modules"))
 import DaVinciResolveScript as dvr
 
-NAME = "JJMMTT Vorname Projekt-A"
+NAME = "Projekt-A Projekt-A"
 FPS  = 30000/1001
 MC0  = 0                         # Multicam-Frame 0 == Ton-Frame 0 (Start-TC 01:00:00:00)
-PLAN = json.load(open(r"C:\claude\resolve-prep\Projekt-A\cut_plan.json", encoding="utf-8"))
-DRT  = r"C:\claude\resolve-prep\Projekt-A\mcbuild\scaffold.drt"
-SEQ  = r"C:\claude\resolve-prep\Projekt-A\mcbuild\schnitt_seq.json"
+PLAN = json.load(open(r"C:\claude\resolve-prep\projekt-a\cut_plan.json", encoding="utf-8"))
+DRT  = r"C:\claude\resolve-prep\projekt-a\mcbuild\scaffold.drt"
+SEQ  = r"C:\claude\resolve-prep\projekt-a\mcbuild\schnitt_seq.json"
 
 proj = dvr.scriptapp("Resolve").GetProjectManager().GetCurrentProject()
 mp = proj.GetMediaPool(); root = mp.GetRootFolder()

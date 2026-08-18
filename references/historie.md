@@ -2,33 +2,39 @@
 
 Kurz eintragen: Datum — was geändert — warum. Neueste oben.
 
-## 2026-08-05 — Dateinamen-Konvention aufgeräumt: sechs Regeln (a)–(f)
-Regel 14 hieß noch „drei feste Regeln", war aber auf sechs gewachsen. Jetzt durchnummeriert
-(a)–(f) mit einer Leitfrage vorneweg (*Erkennt ein Kollege allein am Dateinamen Projekt/Folge
-und Stand?*). Neu bzw. geschärft:
-- (b) **Filme tragen vorne das Projektdatum `JJMMTT`** aus dem Projektordner.
-- (f) ⛔ **Nur eigene Dateien umbenennen** — vom Nutzer erzeugte Dateien (Renderings,
-  Standbilder, KI-Bilder) bleiben unangetastet, auch bei Tippfehlern; stattdessen der eigenen
-  Ergebnisdatei gleich beim Anlegen einen guten Namen geben und die Quelle im Skript per
-  **Namensfragment** ansprechen (Resolve-Standbilder enthalten ein geschütztes Leerzeichen,
-  Zeichen 160 — ein getippter Pfad scheitert daran).
+## 2026-08-18 — Farbgebung ausgelagert: zwei eigene Look-Skills, Kamera-Prüfung Pflicht
+Neue Datei `references/farbgebung.md` (Nutzer-Vorgabe vom 18.08.2026):
+- **Standard ist `resolve-kino-look-nodekette`** (4-Node-Kette),
+  **Ersatz ist `resolve-lut-look-kette`** (4 LUT-Nodes + 1 regelbarer Node). Beide liegen als
+  eigene Skills und als öffentliche Repos vor.
+- **In beiden Ketten zuerst die gekauften LUTs und Werkzeuge**; die freien Fassungen nur, wenn
+  ein Werkzeug fehlt oder die Kamera kein Profil im Plugin hat.
+- ⚠️ **Vor jedem Look prüfen, welche Kameras im Projekt liegen.** Log-Material (FS7 II, S-Log3)
+  → Kette wie vorgesehen; **Rec.709-Consumer-Camcorder (Sony AX100, CX900E und ähnliche) →
+  Filmemulation gar nicht oder nur ganz wenig %**, sonst werden die Farben unnatürlich.
+- `SKILL.md` (Lesereihenfolge, Schritt 7, Punkt „Look") entsprechend umgestellt; die alte
+  „Variante A/Variante B"-Formulierung ist damit erledigt.
+- Das öffentliche Repo `resolve-multicam-workflow` stand seit 05.08. still — mit diesem Eintrag
+  wird der ganze Zwischenstand (Fallstricke 12./13.08., Instagram-Kurz, SetCDL-Richtung)
+  nachgezogen.
 
-## 2026-08-04 (4) — Dateinamen: Zwischenprodukt-Namen nicht weiterschleppen (Nutzer-Auftrag)
+## 2026-08-04 (5) — Dateinamen: Zwischenprodukt-Namen nicht weiterschleppen (Nutzer-Auftrag)
 Ergänzung zu Regel 14 (SKILL.md) und `fallstricke.md`: Ein Dateiname muss **erstens dem Projekt**
 zuzuordnen sein, **dann** Details und Version tragen. Deshalb gilt jetzt beides:
 - Quelle ist ein **fertiger Film mit gutem Namen** → Namen übernehmen, Zusatz hinten dran.
 - Quelle ist ein **Zwischenprodukt mit kryptischem Namen** (Resolve-Standbild
   `Standbild 2026-08-03 170627 für tb 1_2.1.1.png`) → Namen **neu bilden**:
-  `<Projekt/Folge> <Art> <Details> <Version>`.
+  `<Projekt/Folge> <Art> <Details> <Version>`, z. B. `Titelbild <Folge> v2_4K.jpg`.
   Beim Zwischenprodukt selbst ist ein Datums-/Zeitname noch okay, wenn es im zugehörigen
-  `renderings`-Ordner liegt; bei Enddateien (Titelbilder, Grafiken, Videos, Texte) nicht.
+  `renderings`-Ordner liegt; bei Enddateien nicht.
 Praktisch: `instagram_kurz.py` leitet den Namen aus der Quelle ab, `make_thumb_*.py` setzt
 `OUTNAME` sprechend.
 
-## 2026-08-04 (3) — Blenden als Alpha, 4K-Standbild, AppendToTimeline-Off-by-one
-Aus der Nacharbeit an einer Folge mit Grafik-Overlays in `fallstricke.md` ergänzt bzw. korrigiert:
+## 2026-08-04 (4) — Blenden als Alpha, 4K-Standbild, AppendToTimeline-Off-by-one
+Aus der Nacharbeit an einer Folge (Grafik-Overlays + Auslieferung) in `fallstricke.md`
+ergänzt bzw. korrigiert:
 - **Weiche Blenden für Overlays per ffmpeg als Alpha einbacken** (ProRes 4444) statt
-  Opacity-Keyframes zu klicken — spart die unzuverlässige Inspector-Arbeit und zittert nicht.
+  Opacity-Keyframes zu klicken — spart die unzuverlässige Inspector-Arbeit, zittert nicht.
 - **4K-Standbild aus einer 1080p-Timeline** über kurzzeitiges Umstellen der Timeline-Auflösung
   + `GrabStill`/`ExportStills` — für scharfe Titelbilder.
 - **`AppendToTimeline`: `endFrame` ist die Dauer**, nicht Dauer−1 (war 1 Frame zu kurz).
@@ -37,8 +43,20 @@ Aus der Nacharbeit an einer Folge mit Grafik-Overlays in `fallstricke.md` ergän
 - Bestätigt: **Ripple-Einfügen (Kaltstart) bleibt beim Nutzer** — die Aufnahmezeiten liegen
   zstd-komprimiert in den DRT-Blobs, dafür gibt es keinen sicheren Skriptweg.
 
+## 2026-08-04 (3) — öffentliches Repo aktualisiert
+Der Skill ist als **öffentliches Repo** veröffentlicht:
+`https://github.com/web594/resolve-multicam-workflow` (Arbeitskopie `C:\claude\resolve-multicam-repo`).
+Stand vom 22.07. auf den heutigen gebracht (Multicam per DRT, Kino-Look-Rezept, Vorbild-Projekt,
+Grafik-Einblendungen, neue Vorlagen).
+- **Regel: keine Projekt-/Kunden-/Personendaten.** Anonymisierung per Skript
+  (`scratchpad/anonymisieren.py`, Mapping: Projekt-A…H, Reihe-R, Thema-X/-Y/-Z, `JJMMTT`,
+  Benutzername → `<benutzer>`). **Hinweise auf wunder-media.de sind ausdrücklich erlaubt.**
+- ⚠️ Falle der ersten Veröffentlichung: naives Ersetzen ohne Wortgrenzen zerstörte Wörter
+  („Ebene" → „Eprojekt-d", weil `Projekt-D` ersetzt wurde). Jetzt buchstabenbasierte Grenzen
+  `(?<![A-Za-zÄÖÜäöüß])…(?![A-Za-zÄÖÜäöüß])`. Nach jeder Anonymisierung gegenprüfen.
+
 ## 2026-08-04 (2) — ⭐ Vorbild-Projekt festgehalten (Nutzer-Auftrag)
-Der Nutzer hat den Stand von `Projekt-B-3` (2 Kameras + Hauptton) ausdrücklich als
+Der Nutzer hat den Stand von `Projekt-B-3 Projekt-B` (2 Kameras + Hauptton) ausdrücklich als
 **Vorbild für Multicam-Projekte** freigegeben. Neu `references/vorbild-projekt.md`:
 Plattenordner, **Soll-Zustand der Mediathek**, der bewährte Farb-Ablauf und vor allem die
 **Grenze Claude ↔ Mensch**.
@@ -124,7 +142,7 @@ Neu in `SKILL.md`: **Berechtigungen & stehende Antworten** (request_access, Reli
 und die vom Nutzer festgelegten Defaults) — der Nutzer will kein Nachfragen mehr bei entschiedenen
 Punkten. Konkret:
 - **≥2 Kameras → IMMER geschnittene Multicam** (Schritt 6 verpflichtend; Rezept + Schwarzloch-Render-
-  Test; Projekt-A-Referenzskripte `vorlagen/mcbuild/*_Projekt-A.py`).
+  Test; Projekt-A-Referenzskripte `vorlagen/mcbuild/*_projekt-a.py`).
 - **Grade propagiert live** über die Winkel-Quell-Timelines durch den Multicam-Clip (Schritt 7).
 - **⭐ Gleiche Node-Inhalte = geteilte Nodes via COLOR GROUP** (API: `AddColorGroup`,
   `AssignToColorGroup`, `GetPre-/GetPostClipNodeGraph().SetLUT`): Pre-Clip=ARRI, Clip=Korrektur pro
@@ -138,7 +156,7 @@ Punkten. Konkret:
   „Multicam-Perspektive wechseln → Angle N" tauschen. **Bewegung/Schwenk ist OK — nur Unschärfe/
   Wackeln tauschen**; Objektivwechsel = Fast-Schwarzbild, ggf. im zu entfernenden Vorlauf.
 - Zugehörige Memories: `grading-look-kette-praeferenz`, `nicht-destruktiv-markieren`,
-  `Vorname-Projekt-A-projekt`.
+  `projekt-a-projekt`.
 
 ## 2026-07-20 (später) — OFX-Setzen GELÖST
 Fortsetzung mit nativem Referenz-OFX (per Computer-Use angelegt, Einzelschritt-Drag) + DB-Diff:
@@ -187,7 +205,7 @@ Vollständige Fassung im Memory `resolve-automatisierung-stand` (dort steht der 
 7. Testprojekt „zz claude api-probe (loeschbar)" ist löschbar — **außer `cal-tl` mit
    `cal_ramp.mp4`** (Re-Kalibrierung) und `probe-tl` (Werkbank für neue OFX-Vorlagen).
 
-## 28.07.2026 — Grafik-Einblendungen #N Thema-Y
+## 28.07.2026 — Grafik-Einblendungen #3 Thema-Y
 - **Neu: `vorlagen/instagram_kurz.py`** — die ganze Instagram-Auslieferung in einem Aufruf
   (Spalte nachmessen, Crop+ASS, Musik-Check, −14 LUFS zweistufig, Anweisungs-TXT).
   Bei #2 war das noch Handarbeit in fünf Schritten. In `grafik-einblendungen.md` verlinkt.
@@ -207,7 +225,7 @@ Vollständige Fassung im Memory `resolve-automatisierung-stand` (dort steht der 
   Projekt-Unterordner** (Elternordner-Name der Quelldatei), nie mehr lose in
   Master-Root — direkte Folge des Namenskollisions-Bugs vom selben Tag.
 - **Neuer Parameter `--fuer "..."`**: schreibt einen Kurzhinweis ins
-  `Comments`-Feld des Media-Pool-Clips (z. B. "#N Thema-Y, ab 0:41 - Aufbau
+  `Comments`-Feld des Media-Pool-Clips (z. B. "#3 Thema-Y, ab 0:41 - Aufbau
   Thema-Y"). Ohne Angabe automatisch `Timeline @ Frame X (Track Y)`. Grund:
   bei vielen Folgen mit gleicher g1…g9-Namenskonvention war in der Mediathek
   nicht mehr erkennbar, welcher Clip zu welcher Timeline/Stelle gehört.
@@ -216,11 +234,11 @@ Vollständige Fassung im Memory `resolve-automatisierung-stand` (dort steht der 
   Backslash im Python-Quelltext ueber `chr(92)` erzeugen — direkte
   Backslash-Literale gehen durch mehrere Shell-/rctl-eval-Schichten kaputt).
 
-## 29.07.2026 (2) — #N Thema-Y abgeschlossen: drei Automatisierungen
+## 29.07.2026 (2) — #3 Thema-Y abgeschlossen: drei Automatisierungen
 - **`vorlagen/infografik/`** neu: `stil_modul.py` (generisches Stil-Modul) + drei
   Beispielskripte (Datengrafik, Lower-Third, Schemazeichnung). `save()` **zentriert
   Vollbild-Grafiken jetzt automatisch vertikal** (`center=True`) und kennt
-  `lower_third=True`. Grund: bei #N waren 6 von 7 Grafiken unten zu eng (147 px
+  `lower_third=True`. Grund: bei #3 waren 6 von 7 Grafiken unten zu eng (147 px
   oben / 68–102 px unten), der Nutzer musste zweimal nachfragen. An allen neun
   Grafiken verifiziert (Abweichung 0–1 px).
 - **`vorlagen/verify_overlays.py`** neu: prüft die fertige Overlay-Timeline in einem
@@ -260,3 +278,45 @@ Vollständige Fassung im Memory `resolve-automatisierung-stand` (dort steht der 
 - ⚠️ Eine DRX aus einem echten Projekt enthält `SrcHint` (Projekt-/Kundenname),
   `GalleryPath` (Benutzername) und **Vorschaubilder aus dem Dreh** (`Buffer`,
   `ClipThumbnails`) — vor jeder Weitergabe `drx_anonymisieren.py` laufen lassen.
+
+## 05.08.2026 — Vorlagen synchronisiert + zwei Fallen ergänzt
+- ⚠️ **`vorlagen/instagram_kurz.py` war veraltet** gegenüber der gepflegten
+  Projekt-Fassung (`…\renderings\tools\instagram_kurz.py`, Stand 04.08.2026).
+  Der Skill-Stand maß die weißen Balken nur an der Bildmittelzeile (weißer
+  Restrand möglich) und benannte die Ausgabe „Instagram Kurz #N …" — ohne
+  Quellname und ohne Projektdatum, also **gegen die Namenskonvention**.
+  Beim Ausliefern von #7 hat das prompt eine falsch benannte Datei erzeugt.
+  → Projekt-Fassung nach `vorlagen/` kopiert. **Merke: wenn ein Werkzeug auch
+  im Projektordner liegt, ist die Projekt-Fassung meist die neuere — vor dem
+  Benutzen kurz `diff`en oder gleich die aus `tools\` nehmen.**
+- `fallstricke.md`: `overlay_tools.py place --frames N` legt nur N−1 Frames
+  (`--frames N+1` übergeben), und `GetIsTrackEnabled` liefert für nicht aktive
+  Timelines `False` → vor jeder Prüfung `SetCurrentTimeline` setzen.
+- **12.08.2026 (Projekt-I Projekt-I):** `fallstricke.md` um vier Punkte ergänzt —
+  stummer externer Recorder (Sync-Master wird dann der Kameraton), zwei Tonquellen nie über
+  die `… ton`-Timeline nesten, Audio-Clips haben kein `Frames`-Property, und die **gemessene**
+  Richtung von `SetCDL` (Power < 1 = heller; gegen Clipping wirkt nur `Slope`).
+  Ausserdem in der alternierenden `make_cutplan`-Fassung zwei Schnittfehler behoben:
+  zu lange Spans müssen in **ungerade** Stückzahl geteilt werden (sonst verschmilzt das letzte
+  Teilstück wieder mit dem Nachbarspan), und `snap()` muss den Schnittpunkt klemmen, wenn keine
+  Phrasengrenze in Reichweite liegt (sonst entstehen 4-Sekunden-Zuckungen).
+  Referenzfassung: `C:\claude\resolve-prep\projekt-i\make_cutplan.py`.
+- **13.08.2026 (Projekt-I Projekt-I):** `fallstricke.md` um die AVCHD-Halbbilddominanz
+  ergänzt (CX900E/AX100 sind `tt` geflaggt, aber progressiv → Clipeigenschaften auf „Progressiv";
+  per API NICHT setzbar, Mehrfachauswahl greift nicht). `kino-look-nodekette.md` um den Abschnitt
+  „FilmConvert je nach Kamera dosieren" ergänzt (FS7 II gut, CX900E/AX100 auf Default unnatürlich)
+  — inkl. der offenen Aufgabe, für Rec.709-Consumer-Camcorder eine eigene Look-Variante zu bauen.
+- **13.08.2026:** `fallstricke.md`: Regel ergänzt, vor schreibenden/exportierenden API-Zugriffen
+  `proj.IsRenderingInProgress()` zu prüfen — ein `Timeline.Export` während eines laufenden
+  Renders zwang den Nutzer zum Resolve-Neustart.
+- **16.08.2026 (Projekt-A Projekt-A):** `fallstricke.md` um den Render-Abbruch „Die Fusion
+  Komposition bei <TC> konnte nicht verarbeitet werden" ergänzt. Echte Ursache steht nur im
+  Resolve-Log (`No frame available for MediaOut1`): eine Fusion-Comp auf einem Anpassungsclip
+  liefert am letzten Comp-Frame kein Bild. Fix = `MediaIn.SetInput('HoldLastFrame', 1.0)`.
+  Mit dokumentiert: die Eingrenz-Technik über Einzelframe-Testrender per API, und was alles
+  NICHT hilft (Comp-Range, PassThrough auf Blur/Maske/AudioDisplay, Spur deaktivieren).
+- **16.08.2026 (Projekt-A Projekt-A, Fortsetzung):** `fallstricke.md` um zwei wiederverwendbare
+  Techniken ergänzt: (1) **Clip trimmen ohne Maus** — Spuren sperren + `keys.py ctrl+b` +
+  `tl.DeleteClips([item], False)`, inkl. der Falle, dass `SetCurrentTimecode` direkt nach
+  `OpenPage` verschluckt wird; (2) **Wirkung eines Nodes messen, bevor man ihn abschaltet**
+  (Frame-Differenz an mehreren Stellen statt `GetToolsInNode` zu vertrauen).

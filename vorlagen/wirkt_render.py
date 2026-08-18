@@ -7,8 +7,8 @@ os.environ.setdefault("RESOLVE_SCRIPT_LIB", r"C:\Program Files\Blackmagic Design
 sys.path.append(os.path.join(os.environ["RESOLVE_SCRIPT_API"], "Modules"))
 import DaVinciResolveScript as dvr
 
-OUT = r"C:\claude\resolve-prep\Projekt-B-2\rtest"
-TL = "Projekt-B-2 weit import"
+OUT = r"C:\claude\resolve-prep\projekt-b2\rtest"
+TL = "Projekt-B-2 Projekt-B weit import"
 IN_TC, OUT_TC = "01:05:12:00", "01:05:12:20"
 
 resolve = dvr.scriptapp("Resolve")

@@ -132,6 +132,21 @@ Weitere Quirks:
 - Undokumentiert vorhanden: `TimelineItem.GetProperty/SetProperty`, `Timeline.DetectSceneCuts`,
   `Timeline.ImportIntoTimeline`, `resolve.OpenPage/Quit`, `Project.RenderWithQuickExport`.
 
+## ⭐ CDL-Feinkorrektur ohne den Node-Baum zu ersetzen (`rctl cdl`)
+
+Anders als `grade-set` (ersetzt den kompletten Node-Baum durch Basis+Werte) patcht
+`item.SetCDL({...})` **nur den angegebenen Node** — sicher für Nachjustierungen an einer
+fertigen Kette (z. B. Node 2 „Primärkorrektur" nach dem Anwenden der Kino-Look-DRX heller
+stellen). ⚠️ **Falle (Projekt-J 06.08.2026):** `SetCDL` verlangt **alle vier Schlüssel
+gleichzeitig** — `Slope`, `Offset`, `Power`, `Saturation` — sonst liefert es `False`, auch
+wenn nur einer geändert werden soll. Neutral mitschicken: `Slope "1 1 1"`, `Offset "0 0 0"`,
+`Saturation "1"`. Beispiel Gamma/Midtones anheben:
+```python
+item.SetCDL({'NodeIndex':'2','Slope':'1 1 1','Offset':'0 0 0',
+             'Power':'1.18 1.18 1.18','Saturation':'1'})
+```
+`Power` entspricht dem Gamma-Rad; höherer Wert = heller (verifiziert).
+
 ## Weitere eigene Werkzeuge
 
 - `C:\claude\resolve-prep\prepare_project.py "<Projektordner>"` (`--dry-run`) — generische

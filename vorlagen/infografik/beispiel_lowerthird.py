@@ -21,7 +21,7 @@ d.line([(140*S, panel_top+8*S), (W-140*S, panel_top+8*S)], fill=(240, 180, 74, 9
 begriffe = [
     ("ENTSTÖRUNG",     "Störende Einflüsse an einem Platz ausgleichen"),
     ("HARMONISIERUNG", "Grundstück, Haus oder Landschaft wieder ins Gleichgewicht bringen"),
-    ("Thema-Y",      "Senkrechtes Rohr mit Mineralien, das Lebensenergie verdichtet"),
+    ("THEMA-Y",      "Senkrechtes Rohr mit Mineralien, das Lebensenergie verdichtet"),
 ]
 x0 = 200*S
 def_x = x0 + 42*S + 420*S

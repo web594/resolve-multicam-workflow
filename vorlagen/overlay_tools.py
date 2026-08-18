@@ -14,11 +14,11 @@ Aufrufe
   py overlay_tools.py zoomsafe  bild.png ausgabe.png [--scale 0.90]
   py overlay_tools.py mov       bild.png ausgabe.mov --frames 264 [--fps 30000/1001] [--alpha]
   py overlay_tools.py place     ausgabe.mov --timeline 7 --track 4 --at 2676 --frames 264 \
-                                 --fuer "#N Thema-Y, ab 0:41 - Aufbau Thema-Y"
+                                 --fuer "#3 Thema-Y, ab 0:41 - Aufbau Thema-Y"
 
 `place` importiert automatisch in den Mediathek-Unterordner, der dem
-Elternordner der Datei entspricht (z. B. ".../#N Thema-Y/xxx.mov" ->
-Ordner "#N Thema-Y"; wird angelegt, falls er fehlt) - NIE lose in
+Elternordner der Datei entspricht (z. B. ".../#3 Thema-Y/xxx.mov" ->
+Ordner "#3 Thema-Y"; wird angelegt, falls er fehlt) - NIE lose in
 Master-Root. `--fuer` schreibt einen Kurzhinweis ins Comments-Feld des
 Clips (Spalte in der Mediathek einblendbar), damit bei vielen Dateien
 erkennbar bleibt, fuer welche Timeline/Stelle sie gedacht sind. Ohne
@@ -137,8 +137,8 @@ def _alle_clips(folder):
 
 def cmd_place(args):
     """Importiert das MOV in den zur Quelldatei passenden Projekt-Unterordner
-    (Name des Elternordners der Datei, z. B. ".../#N Thema-Y/xxx.mov" ->
-    Mediathek-Unterordner "#N Thema-Y") und legt es an die gewünschte
+    (Name des Elternordners der Datei, z. B. ".../#3 Thema-Y/xxx.mov" ->
+    Mediathek-Unterordner "#3 Thema-Y") und legt es an die gewünschte
     Timeline-Position. Ersetzt eine gleichnamige Vorversion sauber (Resolve
     cacht sonst die alte Datei) UND schreibt ins Comments-Feld, für welche
     Timeline/Stelle die Grafik gedacht ist - sonst ist das bei vielen
@@ -163,7 +163,7 @@ def cmd_place(args):
     # Andere Projekte nutzen dieselbe g1/g2/...-Namenskonvention; ein reiner
     # Namensvergleich hat schon einmal das g1_fachbegriffe.mov eines ANDEREN
     # Projekts geloescht und die eigene Timeline stillschweigend darauf
-    # umgelinkt (Fund 29.07.2026, Projekt Reihe-R-alexander).
+    # umgelinkt (Fund 29.07.2026, Projekt Reihe-R).
     def gleiche_datei(c):
         try:
             p = c.GetClipProperty('File Path')
@@ -172,7 +172,7 @@ def cmd_place(args):
         return p and os.path.abspath(p) == ziel
     mp.DeleteClips([c for c in _alle_clips(root) if gleiche_datei(c)])
 
-    ordnername = os.path.basename(os.path.dirname(ziel))  # z.B. "#N Thema-Y"
+    ordnername = os.path.basename(os.path.dirname(ziel))  # z.B. "#3 Thema-Y"
     zielordner = _finde_oder_erstelle_ordner(mp, root, ordnername)
     mp.SetCurrentFolder(zielordner)
     item = mp.ImportMedia([ziel])[0]
@@ -199,7 +199,7 @@ def main():
     c = sub.add_parser("check");    c.add_argument("bild"); c.add_argument("--zoom", type=float, default=1.10); c.set_defaults(f=cmd_check)
     z = sub.add_parser("zoomsafe"); z.add_argument("bild"); z.add_argument("ausgabe"); z.add_argument("--scale", type=float, default=0.90); z.set_defaults(f=cmd_zoomsafe)
     m = sub.add_parser("mov");      m.add_argument("bild"); m.add_argument("ausgabe"); m.add_argument("--frames", type=int, required=True); m.add_argument("--fps", default="30000/1001"); m.add_argument("--alpha", action="store_true"); m.set_defaults(f=cmd_mov)
-    l = sub.add_parser("place");    l.add_argument("mov"); l.add_argument("--timeline", type=int, default=0); l.add_argument("--track", type=int, default=4); l.add_argument("--at", type=int, required=True); l.add_argument("--frames", type=int, required=True); l.add_argument("--fuer", default="", help='Kurzer Hinweis fuers Comments-Feld, z.B. "#N Thema-Y, ab 0:41 - Aufbau Thema-Y". Ohne Angabe wird Timeline+Frame automatisch eingetragen.'); l.set_defaults(f=cmd_place)
+    l = sub.add_parser("place");    l.add_argument("mov"); l.add_argument("--timeline", type=int, default=0); l.add_argument("--track", type=int, default=4); l.add_argument("--at", type=int, required=True); l.add_argument("--frames", type=int, required=True); l.add_argument("--fuer", default="", help='Kurzer Hinweis fuers Comments-Feld, z.B. "#3 Thema-Y, ab 0:41 - Aufbau Thema-Y". Ohne Angabe wird Timeline+Frame automatisch eingetragen.'); l.set_defaults(f=cmd_place)
 
     a = p.parse_args()
     sys.exit(a.f(a) or 0)

@@ -10,10 +10,10 @@ os.environ.setdefault("RESOLVE_SCRIPT_LIB", r"C:\Program Files\Blackmagic Design
 sys.path.append(os.path.join(os.environ["RESOLVE_SCRIPT_API"], "Modules"))
 import DaVinciResolveScript as dvr
 
-NAME = "Projekt-B-1"
+NAME = "Projekt-B-1 Projekt-B"
 FPS = 30000/1001
-OFF  = json.load(open(r"C:\claude\resolve-prep\Projekt-B\offsets.json", encoding="utf-8"))["sources"]
-PLAN = json.load(open(r"C:\claude\resolve-prep\Projekt-B\cut_plan.json", encoding="utf-8"))
+OFF  = json.load(open(r"C:\claude\resolve-prep\projekt-b\offsets.json", encoding="utf-8"))["sources"]
+PLAN = json.load(open(r"C:\claude\resolve-prep\projekt-b\cut_plan.json", encoding="utf-8"))
 CAMS = ("weit", "seite")
 FOFF = {a: OFF[a]["frames"] for a in CAMS}
 

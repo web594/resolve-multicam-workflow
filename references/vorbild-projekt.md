@@ -1,6 +1,6 @@
 # Vorbild-Projekt: so soll ein fertiges Multicam-Projekt aussehen
 
-Ausgelesen am **04.08.2026** am Projekt `Projekt-B-3` (3. Folge derselben Reihe,
+Ausgelesen am **04.08.2026** am Projekt `Projekt-B-3 Projekt-B` (3. Folge derselben Reihe,
 2 Kameras + separater Hauptton). Der Nutzer hat diesen Stand ausdrücklich als **Vorbild**
 freigegeben: „dieser Farb-Ablauf ist ganz gut geworden".
 
@@ -73,7 +73,8 @@ Master
   ├─ <NAME> seite import          ← Quell-Timeline Cutaway     = Angle 2  · TRÄGT DEN GRADE
   ├─ <NAME> ton import            ← Hauptton-Timeline
   ├─ <NAME> Multicam              ← der Multicam-Clip selbst
-  ├─ <NAME> Multicam Auswahl      ← Arbeitskopie, hier schneidet der Mensch
+  ├─ (<NAME> Multicam Auswahl)    ← ⚠️ NICHT von Claude vorab anlegen — erst wenn der Nutzer
+  │                                  den Multicam Schnitt als fertig bestätigt (06.08.2026)
   ├─ (Einspieler, bereinigter Ton, Musik … kommen beim Weiterarbeiten dazu)
   ├─ [mitte] [seite] [ton]        ← Bins mit den Quellclips
   └─ [Anlegen]                    ← ⭐ Bins für alles, was nur beim Anlegen gebraucht wurde
@@ -98,7 +99,7 @@ mp.MoveClips([c for c in root.GetClipList() if c.GetName() in namen], ziel)
 ```
 
 ⚠️ **Die `… import`-Timelines bleiben oben** — sie tragen den Grade und sind die Multicam-Winkel.
-Ebenso `Multicam Schnitt`, `Multicam` und `Multicam Auswahl`.
+Ebenso `Multicam Schnitt` und `Multicam`. `Multicam Auswahl` kommt erst **später** dazu (s. o.).
 
 ## 3. Farb-Ablauf — der bewährte (Variante A)
 
@@ -146,7 +147,7 @@ was Zeigen, Beurteilen oder freies Gestalten ist.**
 | 5-Node-Look per DRX auf beide Kameras | **Claude** | 0,04 s statt >1 h Klicken |
 | Node 2 einmessen (Gain/Offset/Temp/Tint) | **Claude** | Richtung bestätigt der Nutzer |
 | Marker Anfang/Ende aus dem Transkript, Löschkandidaten gelb | **Claude** | nicht-destruktiv |
-| Arbeitskopie `… Multicam Auswahl` anlegen, Vorlauf abtrennen | **Claude** | in der KOPIE erlaubt |
+| Arbeitskopie `… Multicam Auswahl` anlegen, Vorlauf abtrennen | **Claude** | ⚠️ erst wenn `Multicam Schnitt` vom Nutzer als fertig bestätigt ist — nicht automatisch (06.08.2026) |
 | Zwischen-Timelines nach `Anlegen` räumen | **Claude** | s. o. |
 | Transkript-Ton, Titelbild-Standbild, Render-Bereiche, YouTube-Paket | **Claude** | |
 | **Node 4: Qualifizierer/Power Window ziehen** | **Mensch** | motivabhängig, per Maus 1–3 min |

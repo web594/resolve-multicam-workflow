@@ -29,16 +29,38 @@ Feinschnitt und Gestaltung bleiben beim Menschen. Die Tabelle dazu steht in
 - **Transkript** (faster-whisper) -> **Auto-Schnittplan** aus Sprechpausen (ruhiges Schnitt-Tempo).
 - ⭐ **Geschnittene Multicam komplett per Skript** - der Multicam-Clip *und* die Winkel-Schnitte
   werden als DRT gebaut und importiert, **ohne einen einzigen GUI-Klick** (`vorlagen/mcbuild/`).
-- **Grading**: die 5-Node-Kette (Log-Dekodierung/Filmstock -> Primaerkorrektur -> Finish-LUT ->
-  Haut-Sekundaer -> Halation/Vignette), per **DRX in Sekundenbruchteilen** auf alle Kameras
-  uebertragbar; alternativ die aeltere 3-LUT-Kette ueber eine **Color Group** (geteilte Nodes).
-  Korrekturen immer als regelbare Node-Werte, nie als zusaetzlich gebackene LUT.
+- **Grading**: die Farbgebung liegt in zwei eigenen Skills/Repos (s. u.) und wird per **DRX in
+  Sekundenbruchteilen** auf alle Kameras uebertragen - als **geteilte Nodes** ueber eine Color
+  Group. Korrekturen immer als regelbare Node-Werte, nie als zusaetzlich gebackene LUT.
 - **Nicht-destruktive Nachbearbeitung**: Anfang nur per Marker, Loeschkandidaten nur gelb;
   verwackelte/unscharfe Winkel automatisch finden (ffmpeg+numpy) und tauschen.
 - **Titel-Vorspann** als OVERLAY (ohne Ripple), **Grafik-Einblendungen** und eine
   **9:16-Kurzfassung** fuer Social (Crop, Untertitel, -14 LUFS).
 - **Verifikation** an jeder Stelle: Luecken/Ueberlappungen/Winkelfehler, Schwarzbild-Render-Test,
   Overlay-Pruefung, Wirkungsmessung einzelner Grading-Nodes.
+
+## Farbgebung: zwei eigene Skills
+
+Der Look steckt bewusst **nicht** in diesem Skill, sondern in zwei eigenstaendigen - so bleibt der
+Multicam-Ablauf unabhaengig davon, welcher Look gefahren wird:
+
+| Rolle | Repo | Kette |
+|---|---|---|
+| ⭐ **Standard** | [resolve-kino-look-nodekette](https://github.com/web594/resolve-kino-look-nodekette) | 4 Nodes: Filmemulation · Weissabgleich+Helligkeit (regelbar) · Finish-LUT bei 40 % · Film-Look-Erzeuger (Halation/Vignette) |
+| **Ersatz** | [resolve-lut-look-kette](https://github.com/web594/resolve-lut-look-kette) | 4 LUT-Nodes + 1 regelbarer Node: Log→ARRI Rec.709 · Weissabgleich+Helligkeit · Rec.709→ARRI LogC · Filmemulation · Kino-Look |
+
+Standardmaessig wird die **Nodekette** gebaut. Die **LUT-Kette** ist die Rueckfallmoeglichkeit -
+wenn Plugins fehlen oder nicht zur Kamera passen, wenn eine Reihe bereits darauf aufgebaut ist,
+oder auf ausdruecklichen Wunsch. In beiden Ketten kommen **zuerst die gekauften LUTs und
+Werkzeuge** zum Einsatz; die frei gerechneten Fassungen (beide Repos bringen sie mit) sind der
+Weg, wenn ein Werkzeug fehlt - oder wenn die Kamera kein Profil im Plugin hat.
+
+⚠️ **Die Kette ist nicht kameraunabhaengig.** Vor jedem Look wird geprueft, welche Kameras im
+Projekt liegen: Log-Material mit echtem Kameraprofil (z. B. Sony FS7 II, S-Log3) laeuft mit voller
+Filmemulation; bei **Rec.709-Consumer-Camcordern (Sony AX100, CX900E und aehnlichen) wird die
+Filmemulation gar nicht oder nur ganz schwach dosiert**, weil das Plugin ohne passendes
+Kameraprofil die Farben unnatuerlich macht - der Filmcharakter kommt dann aus den uebrigen Nodes.
+Einzelheiten: `references/farbgebung.md`.
 
 ## Nicht alle Projekte sind gleich
 
@@ -74,6 +96,9 @@ Mediathek-Aufraeumen, Arbeitsteilung).
 2. In den Skripten unter `vorlagen/` die **Pfad- und Namens-Konstanten am Dateikopf** an dein System
    anpassen (Arbeitsordner, LUT-Namen, Timeline-Namen). Die Beispiele nutzen Windows-Pfade.
 3. Ablauf lesen: `SKILL.md` -> `references/ablauf.md` -> `references/vorbild-projekt.md`.
+4. Fuer die Farbgebung zusaetzlich den Standard-Look-Skill installieren:
+   [resolve-kino-look-nodekette](https://github.com/web594/resolve-kino-look-nodekette)
+   (Ersatz: [resolve-lut-look-kette](https://github.com/web594/resolve-lut-look-kette)).
 
 ## Aufbau
 
@@ -82,6 +107,7 @@ Mediathek-Aufraeumen, Arbeitsteilung).
 | `SKILL.md` | Kurzablauf, stehende Entscheidungen, Regeln fuer die Arbeit am echten Projekt |
 | `references/ablauf.md` | die 9 Schritte von den Rohdaten bis zur Auslieferung |
 | `references/vorbild-projekt.md` | Soll-Zustand eines uebergabefertigen Projekts + Arbeitsteilung |
+| `references/farbgebung.md` | welcher Look-Skill genommen wird + Kamera-Pruefung |
 | `references/kino-look-nodekette.md` | die Grading-Kette als Rezept, mit gemessenen Werten |
 | `references/api-werkzeuge.md` | was die Resolve-API kann - und wo ihre harten Grenzen sind |
 | `references/fallstricke.md` | teuer erlernte Fallen mit Symptom, Ursache, Loesung |

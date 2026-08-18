@@ -6,7 +6,7 @@ os.environ.setdefault("RESOLVE_SCRIPT_LIB", r"C:\Program Files\Blackmagic Design
 sys.path.append(os.path.join(os.environ["RESOLVE_SCRIPT_API"], "Modules"))
 import DaVinciResolveScript as dvr
 
-NAME = "Projekt-B-2"
+NAME = "Projekt-B-2 Projekt-B"
 KEEP_SUFFIX = {"Schnitt import 2": f"{NAME} Multicam Schnitt",
                "Multicam import 3": f"{NAME} Multicam",
                "weit import 4":     f"{NAME} weit import",

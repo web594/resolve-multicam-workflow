@@ -7,8 +7,8 @@ os.environ.setdefault("RESOLVE_SCRIPT_LIB", r"C:\Program Files\Blackmagic Design
 sys.path.append(os.path.join(os.environ["RESOLVE_SCRIPT_API"], "Modules"))
 import DaVinciResolveScript as dvr
 
-B = r"C:\claude\resolve-prep\Projekt-B-2"
-NAME = "Projekt-B-2"
+B = r"C:\claude\resolve-prep\projekt-b2"
+NAME = "Projekt-B-2 Projekt-B"
 TLNAME = f"{NAME} Multicam Schnitt"
 FPS = 30000/1001
 SEQ = json.load(open(B + r"\mcbuild\schnitt_seq.json", encoding="utf-8"))

@@ -81,7 +81,37 @@
   HStrength≈0.4) → gilt konstant über die Cliplänge, Balken sichtbar. Wert hält stabil (mit TC-Sprung
   prüfen). Fall Projekt-G 24.07.
 
+- ⭐ **Arbeitskopie einer Multicam-Timeline NICHT per `ImportTimelineFromFile` duplizieren**
+  (Projekt-J 06.08.2026): erzeugt einen kompletten zweiten Multicam-Unterbau (neuer
+  Multicam-Clip + neue „…import 1"-Winkel-Kopien) **ohne** den vorhandenen Grade — die Kopie
+  sieht ungegradet aus. Fix: `AppendToTimeline` auf eine neue leere Timeline, `mediaPoolItem`
+  = der bestehende (gegradete) Multicam-Clip, `startFrame/endFrame` je Clip aus
+  `GetLeftOffset()`/`+GetDuration()` der Originaltimeline. Details `ablauf.md` Schritt 8.1.
+- ⭐ **Kino-Look-DRX ist auf Log-Kameras kalibriert (FilmConvert Make/Model/Profile) — auf
+  Rec.709-Consumer-Kameras (kein Log-Bildprofil) macht sie das Bild crushed/zu dunkel**
+  (Projekt-J 06.08.2026: zwei Rec.709-Camcorder statt der sonst üblichen FS7/S-Log3).
+  FilmConvert Nitrate wendet sonst einen Log-Dekode-Schritt auf bereits fertiges Rec.709-Bild
+  an. **Vorher prüfen:** `ffmpeg -vf signalstats` auf einen Frame — YMIN nahe 0 UND YMAX=255
+  → Rec.709 (nicht Log; S-Log3 hätte YMIN ~40-70 und würde nicht auf 255 clippen). Bei
+  Rec.709-Material im FilmConvert-Node **Make/Model auf „Default/Default", Profile auf
+  „Standard sRGB"** umstellen (nur per GUI-Dropdown, keine bekannte API dafür) — danach den
+  korrigierten Clip per `grade-save` neu als Vorlage sichern und auf die übrigen Clips
+  verteilen, statt die Original-DRX blind zu übernehmen.
+
 ## Multicam
+
+- ⭐ **Skripte aus einem ALTEN Projektordner kopieren = Fixes fehlen** (09.08.2026, projekt-b4).
+  Verlockend, weil dort schon die passende Variante steht (z. B. `TLOFF=0` bei negativen Offsets,
+  die `<In/>`-Regex). Aber diese Fassungen sind eingefroren: `build_mc_drt.py` aus projekt-b3 hatte
+  den **FrameRate-Fix nicht** (der kam erst mit Projekt-J in `vorlagen/`). **Regel: aus dem
+  Projektordner kopieren ist ok, danach aber gegen `vorlagen/` diffen und fehlende Fixes
+  nachziehen.** Ebenso Kopf-Konstanten prüfen — verify_mc.py aus projekt-b3 zeigte auf `B=…projekt-b2`
+  und verglich gegen einen fremden Schnittplan („Plan 21", Winkel 'weit') statt zu scheitern.
+- ⚠️ **Bash-Heredocs (`py - <<'EOF'`) zum Patchen von Skripten mit Windows-Pfaden vermeiden** —
+  `\\c`/`\\2` kommen halbiert an (`\260…` wird zur Oktal-Escape), Ersetzungen greifen still nicht
+  oder zerstören Pfade. Stattdessen das Edit-Werkzeug oder PowerShell `[IO.File]::ReadAllText` +
+  `-replace` nehmen. (Auch `Get-Content` ist unsicher, wenn schon ein `\r` in der Zeile steckt —
+  es splittet dort.)
 
 - ⛔⛔ **Beim DRT-Bau eines Multicam-Clips NIEMALS neue UUIDs vergeben** (27.07.2026, Projekt-B-2).
   Symptom: Der Import erzeugt zwar einen Multicam-Clip (`Type: Multicam`, richtiger Start-TC),
@@ -124,6 +154,27 @@
 - **Angle-Mapping ist projektabhängig** und muss ausgelesen werden (Projekt-B: 1=seite, 2=weit;
   Projekt-C: 1=seiteR, 2=nah, 3=weit, 4=seiteL). Im Projekt-Memory notieren.
 - Perspektivensync des Multicam-Clips: **Timecode** (unsere Start-TC-Konvention macht das exakt).
+
+- ⭐⭐ **Multicam-Clip bricht ab einer bestimmten Position mitten in der Timeline SCHWARZ ab
+  (nicht am Anfang, nicht sporadisch wie die ~4s-Löcher weiter unten, sondern ab einem festen
+  Punkt bis zum Ende)** — Ursache: `build_mc_drt.py` übernimmt das Multicam-Element aus einer
+  Muster-DRT (`alt_mc.drt`) eines ANDEREN, älteren Projekts. Dessen `<FrameRate>`-Feld (8-Byte
+  little-endian Double + 8 Nullbytes, hex-codiert) bleibt beim Kopieren unverändert stehen —
+  auch wenn das neue Projekt eine andere FPS hat (z. B. 25 statt 29.97). Resolve berechnet die
+  nutzbare Länge der Multicam-**Sequence** intern mit dieser geerbten FPS, nicht mit der
+  Projekt-FPS: die Sequence wird dadurch effektiv verkürzt (verifiziert Projekt-J
+  06.08.2026: Muster war 29.97fps, Projekt 25fps → Multicam-Clip brach bei ≈654 s statt der
+  echten 1510 s ab; `GetClipProperty('FPS')` zeigte weiterhin 29.97, `Frames`/`End` passten
+  nicht zur tatsächlichen Winkel-Geometrie). Sowohl im Live-Viewer als auch im Render schwarz.
+  **Fix:** `<FrameRate>` im Multicam-Element IMMER auf die eigene Projekt-FPS umschreiben
+  (`struct.pack("<d", FPS) + b"\x00"*8`), unabhängig davon, ob sie zufällig mit dem Muster
+  übereinstimmt — im Skript `build_mc_drt.py` (Vorlage) bereits eingebaut, s. Kommentar dort.
+  **Diagnose-Weg, der hinführte:** Schwarzbild zuerst per `blackdetect` im Render gefunden →
+  Rohdatei am selben Content-Zeitpunkt geprüft (fehlerfrei) → nested (nicht-Multicam)
+  Schnitt-Timeline an derselben Stelle geprüft (fehlerfrei) → „…weit import"-Quelltimeline
+  direkt an der absoluten Multicam-Frame-Position geprüft (fehlerfrei) → erst der Vergleich
+  `mcclip.GetClipProperty(['Duration','FPS','Frames'])` zeigte den Widerspruch (Duration
+  00:10:53:14 bei angeblich 29.97 fps ≈ genau der Abbruchpunkt).
 
 ## Titel-Vorspann (`titel.py`)
 
@@ -190,7 +241,7 @@
    sperren** (`SetTrackLock('video',v, v!=ziel)` + alle Audio sperren) — dann rippelt nur die
    leere Zielspur, V1/A1 bleiben bei 0. Zielspur weiter per Alt+Nr wählen (Resolve muss im
    Vordergrund sein, sonst landet der Insert auf V1). Reihenfolge Anpassungsclip(V2) dann
-   Titel(V3). Fertiges Muster: `resolve-prep\Projekt-A\mcbuild\titel_overlay.py`.
+   Titel(V3). Fertiges Muster: `resolve-prep\projekt-a\mcbuild\titel_overlay.py`.
 
 ## OFX per Skript setzen — GELÖST (20.07.2026), aber mit Fallen
 
@@ -224,6 +275,15 @@ das Experiment fast scheitern ließen:
 
 ## Grafik-Einblendungen / Overlays  (ausführlich: `grafik-einblendungen.md`)
 
+- **⭐ `overlay_tools.py place --frames N` legt nur N−1 Frames** (`endFrame = frames-1`, aber
+  Resolve rechnet `Dauer = endFrame − startFrame`). → **immer `--frames N+1` übergeben**, wenn
+  das Overlay N Frames lang sein soll, und die Dauer in der Ausgabe nachzählen. Gleiche Regel
+  bei eigenem `AppendToTimeline`: `endFrame = startFrame + gewünschte Dauer`.
+  (Gefunden 05.08.2026 an #7 Thema-W; deckt sich mit dem #5-Befund.)
+- **⭐ `GetIsTrackEnabled` liefert für NICHT aktive Timelines `False`.** `verify_overlays.py`
+  meldet dann fälschlich „A2 STUMM … Schluss stumm!". → Vor jeder Prüfung
+  `proj.SetCurrentTimeline(tl)` setzen (das Werkzeug macht es nicht selbst), sonst jagt man
+  einem Phantom hinterher.
 - **Standbilder landen nur mit 5 s in der Timeline.** `AppendToTimeline` ignoriert bei PNG/JPG
   das `endFrame`; `SetClipProperty('Frames')` gibt `False`; es gibt **kein** Project-Setting für
   die Still-Dauer (nur App-Preference). → PNG per ffmpeg in **ProRes-MOV mit exakter
@@ -240,14 +300,14 @@ das Experiment fast scheitern ließen:
 - **⭐ Erzeuger-Skripte NIE mit fest verdrahtetem GENERISCHEM Ausgabenamen schreiben** (z. B.
   `"Instagram Kurz %s" % titel` → verwechselbar mit anderen Projekten). Ist die Quelle ein
   fertiger Film, `basis = os.path.splitext(quelle)[0]` nehmen und daraus `f"{basis} <Zusatz>.<ext>"`
-  bilden — siehe SKILL.md Punkt 14.
+  bilden — siehe [[dateinamen-konvention]], SKILL.md Punkt 14.
   Bereits vorhandene generische Namen auf Wunsch umbenennen (behalten, nicht löschen).
 - **⭐ Umgekehrter Fall: kryptische Standbildnamen NICHT in den Titelbildnamen übernehmen**
   (Nutzer, 4.8.2026). `Standbild 2026-08-03 170627 für tb 1_2.1.1.png` ist als Quelle in Ordnung,
   als Titelbildname nicht. Enddateien (Titelbilder, Grafiken, Videos, Texte) heißen
   `<Projekt/Folge> <Art> <Details> <Version>` — in `make_thumb_*.py` also `OUTNAME` sprechend
-  setzen, nicht aus dem Standbildnamen ableiten. Kurz: Quelle = guter Name → übernehmen;
-  Quelle = Zwischenprodukt → Namen neu bilden.
+  setzen (`"Titelbild #5 Thema-Z v2"`), nicht aus dem Standbildnamen ableiten. Kurz:
+  Quelle = guter Name → übernehmen; Quelle = Zwischenprodukt → Namen neu bilden.
 - **⭐ Titelbild: NIE Text über Kopf/Stirn/Gesicht der Hauptperson** (Hintergrundpersonen ok).
   Zweimal übersehen worden (#2, #4), obwohl Memory [[titelbild-kopf-freihalten]] es sagt — daher
   **vor dem Rendern des Titelbilds hier nachlesen** und das Ergebnis **immer ansehen**. `make_thumb`
@@ -258,25 +318,25 @@ das Experiment fast scheitern ließen:
   (verifiziert 3.8.2026): MediaPool-Item **relinken** — `mp.RelinkClips([clip], r"<ordner>")`;
   der Timeline-Clip aktualisiert sich sofort, kein Löschen/Neu-Importieren nötig. (Manchmal zeigt
   Resolve die neue Version auch ohne Zutun — erst per `rctl.py frame` prüfen.)
-- **`rctl.py frame` zeigt Overlays oberer Spuren DOCH** (verifiziert 4.8.2026: Endkarte und
-  Lower-Third auf der Overlay-Spur waren im PNG drin, inkl. Alpha-Blende) — Platzierungen und
-  Blenden lassen sich damit prüfen, ohne dem Nutzer den Bildschirmfokus zu nehmen.
-  (Ältere Notiz „zeigt Overlays nicht" war falsch.)
+- **`rctl.py frame` zeigt Overlays oberer Spuren DOCH** (verifiziert 4.8.2026 an #5: Endkarte auf V4
+  und Lower-Third waren im PNG drin, inkl. Alpha-Blende) — Platzierungen und Blenden lassen sich
+  damit prüfen, ohne dem Nutzer den Bildschirmfokus zu nehmen. (Ältere Notiz „zeigt Overlays nicht"
+  war falsch.)
 - **⭐ Weiche Blenden für Overlays als ALPHA einbacken** statt Opacity-Keyframes zu klicken
-  (4.8.2026): `ffmpeg -i g.mov -vf "format=yuva444p10le,fade=t=in:st=0:d=<s>:alpha=1,
+  (4.8.2026, #5): `ffmpeg -i g.mov -vf "format=yuva444p10le,fade=t=in:st=0:d=<s>:alpha=1,
   fade=t=out:st=<dauer-aus>:d=<s>:alpha=1" -c:v prores_ks -profile:v 4444 -pix_fmt yuva444p10le`.
-  Wirkt auch bei Vollbild-Grafiken als echte Überblendung auf das Bild darunter. Anders als
-  `zoompan` zittert das nicht — Blenden einbacken ist erlaubt, Zoom nicht. Prüfen: je Frame den
-  Alpha-Mittelwert messen (Pillow, `im.split()[3]`).
+  Wirkt auch bei Vollbild-Grafiken als echte Überblendung auf das darunterliegende Bild.
+  Anders als `zoompan` zittert das nicht — Blenden einbacken ist erlaubt, Zoom nicht.
+  Prüfen: Frame per Frame den Alpha-Mittelwert messen (Pillow, `im.split()[3]`).
 - **⭐ `AppendToTimeline`: `endFrame` = gewünschte Dauer, NICHT Dauer−1** (4.8.2026 gemessen).
   Mit `startFrame: 0, endFrame: 268` entsteht ein 268-Frame-Clip; für 269 Frames `endFrame: 269`.
-  Danach immer `GetStart/GetEnd/GetDuration` gegenprüfen.
-- **⭐ 4K-Standbild aus einer 1080p-Timeline** (für Titelbilder): Timeline kurz umstellen —
-  `tl.SetSetting("useCustomSettings","1")`, `timelineResolutionWidth/Height` auf 3840/2160 —,
-  dann `resolve.OpenPage("color")`, `tl.GrabStill()`,
+  Nach dem Setzen immer `GetStart/GetEnd/GetDuration` gegenprüfen.
+- **⭐ 4K-Standbild aus einer 1080p-Timeline** (4.8.2026, für Titelbilder): Timeline kurz
+  umstellen — `tl.SetSetting("useCustomSettings","1")`, `timelineResolutionWidth/Height` auf
+  3840/2160 —, dann `resolve.OpenPage("color")`, `tl.GrabStill()`,
   `proj.GetGallery().GetCurrentStillAlbum().ExportStills([still], ordner, name, "png")`,
-  Still löschen und die Auflösung zurückstellen. Liefert echte 4K-Schärfe, wenn das
-  Quellmaterial 4K ist. (`ExportStills` lief dabei zuverlässig.)
+  Still löschen und die Auflösung zurückstellen. Liefert echte 4K-Schärfe, weil das Quellmaterial
+  4K ist. (`ExportStills` lief dabei zuverlässig — die alte Notiz „launisch in R21" traf hier nicht.)
 - **libass:** beim Einbrennen von ASS-Untertiteln **kein `fontsdir`** angeben, sonst fällt es
   auf eine Ersatzschrift zurück (mit `fontsdir=.` + `Bold=-1` reproduzierbar falsch).
 - **ffmpeg-Filter-Expressions:** keine Kommas und kein `pow()` benutzen (bricht die
@@ -315,3 +375,154 @@ Der Nutzer arbeitet in **PowerShell**, und dort sind nackte Kommas
 Array-Trenner — der kopierte Befehl bricht ab. In `instagram_kurz.py` wird
 deshalb jedes Argument ausser den Schaltern (`-x`) in Anfuehrungszeichen
 gesetzt. Gilt fuer jede Anweisungsdatei, die wir dem Nutzer hinlegen.
+
+## Ton- und Grading-Fallen aus Projekt-I (Projekt-I)
+
+**Der externe Recorder kann streckenweise TOT sein — vor dem Sync prüfen (12.08.2026).**
+Bei Projekt-I lieferte der Zoom die ersten 18:20 min **digitale Stille** (−90 dB) und endete
+2 min vor den Kameras. Symptom im Standard-`sync.py`: Pearson-Reihe wie `0.49/0.70/0.00/0.11/0.00`
+und **Streuung 22 s** — die Verifikationsfenster liegen im stummen Bereich. **Fix:** vor dem Sync
+den Pegelverlauf der Tonquelle in Stufen prüfen
+(`ffmpeg -ss T -t 20 -i ton.wav -af volumedetect -f null -`, ohne `-v error`, sonst wird die
+Ausgabe verschluckt), und wenn nur ein Teil Signal trägt:
+1. **Sync-Master wird der Kameraton der Leitkamera** (Teile vorher zu EINER WAV zusammenfügen),
+2. der Recorder wird **nur über seinen nicht-stummen Bereich** gegen diese Referenz korreliert
+   (Muster: `sync_ton.py` im Projektordner projekt-i).
+
+**Eine `… ton`-Timeline mit ZWEI Tonquellen darf nicht als Ton in den Schnitt genestet werden.**
+Beide Spuren summieren sich sonst (Kammfilter). Stattdessen die Tonquellen **einzeln aus dem
+Medienpool** auf getrennte Spuren legen (A1 Recorder, A2 Kameraton) — `AppendToTimeline` mit
+`trackIndex` und `recordFrame`. ⚠️ `recordFrame` ist **timeline-absolut**: Timeline-Frame 0
+entspricht dem ersten geschnittenen Bild, nicht dem Nullpunkt der Sync-Referenz.
+
+**Audio-Clips haben kein `Frames`-Property** (leerer String) — Länge aus `Duration` (Timecode)
+rechnen: `((h*60+m)*60+s)*fps + f`.
+
+**⭐ Richtung von `SetCDL` gemessen (12.08.2026): `Power` < 1 macht HELLER, > 1 dunkler.**
+(Im Memory `projekt-j-projekt` stand es umgekehrt beschrieben.) Und: **Power bewegt die
+Spitzlichter kaum** — gegen ausgefressene Lichter ist `Slope` (Gain) der wirksame Hebel.
+Gemessen an einem überstrahlten Rec.709-Clip: Slope 1,00 → 1,9 % geclippt; Slope 0,90 → 0 %;
+Slope 0,85 → Median 209 → 177 bei sauberen Lichtern.
+
+**Frame-Messungen: erst Timeline UND Clip zusammenbringen.** `rctl.py frame` exportiert das,
+worauf der Playhead steht. Wer `SetCDL` auf Clip-Index 1 setzt, während der Playhead auf Clip 0
+steht, misst viermal denselben Wert und hält es für „CDL wirkt nicht". Also immer
+`SetCurrentTimeline` + `goto` in den Bereich **des Clips**, den man gerade ändert.
+
+**⭐ AVCHD von Sony-Camcordern (CX900E / AX100): Halbbilddominanz auf „Progressiv" stellen
+(Nutzer-Vorgabe, 13.08.2026).** Die MTS-Dateien sind im Container als **`tt` (oberes Halbbild
+zuerst)** geflaggt, obwohl der Inhalt 25p **progressiv** ist (`ffmpeg -vf idet` meldet
+Progressive, 0 TFF/BFF). Resolve übernimmt das Flag als „Automatisch – Oberes Halbbild" und
+deinterlact — Detailverlust und Kammartefakte bei Bewegung. Also bei JEDEM AVCHD-Projekt:
+Clip in der Mediathek → Rechtsklick → **Clipeigenschaften → Video → Halbbilddominanz =
+Progressiv** (setzt zugleich `Enable Deinterlacing` auf 0).
+Prüfen vorab: `ffprobe -show_entries stream=field_order` (zeigt `tt`) und
+`ffmpeg -ss T -t 8 -i x.MTS -vf idet -f null -` (zeigt „Progressive: 200").
+
+⛔ **Zwei Fallen dabei:**
+1. **Per API nicht setzbar:** `MediaPoolItem.SetClipProperty('Field Dominance', …)` gibt für
+   dieses Feld **immer `None` zurück und ändert nichts** — egal welcher Wert. Nur der Dialog
+   geht (Bildschirmsteuerung). **Lesen** geht dagegen: `GetClipProperty('Field Dominance')`
+   liefert `'Auto'` / `'Upper Field'` / `'Progressive'`.
+2. **Mehrfachauswahl greift nicht zuverlässig:** Klick + Shift-Klick auf beide Clips und dann
+   der Dialog stellte nur den **zuletzt angeklickten** Clip um. Also **je Clip einzeln** machen
+   und hinterher **per API gegenprüfen**, dass wirklich alle auf `'Progressive'` stehen.
+
+**⛔ Während eines laufenden Renders NICHT ins Projekt greifen (13.08.2026).**
+Der Nutzer rendert oft parallel, während Claude per API arbeitet. `Timeline.Export`,
+`grade-save`/`ExportStills`, `SaveProject`, das Anlegen/Löschen von Timelines und
+Media-Pool-Operationen können Resolve dabei aus dem Tritt bringen (bei Projekt-I musste der
+Nutzer Resolve neu starten). **Vor jedem schreibenden oder exportierenden Zugriff prüfen:**
+
+```python
+if proj.IsRenderingInProgress():
+    ...  # warten oder den Schritt verschieben, NICHT ausführen
+```
+
+Reines Lesen (`GetClipProperty`, Clip-/Timeline-Listen) ist unkritisch. Und: **für eine
+Nebensächlichkeit gar nicht erst zugreifen** — im konkreten Fall ging es nur darum, einen
+OFX-Wert auszulesen; das hätte warten können.
+
+**⛔⛔ Render bricht an EINEM Frame ab: „Die Fusion Komposition bei <TC> konnte nicht
+verarbeitet werden" (16.08.2026, Projekt-A).**
+Symptom: Der Deliver-Render läuft an und scheitert reproduzierbar an genau einem Timecode.
+Im Resolve-Log (`%APPDATA%\Blackmagic Design\DaVinci Resolve\Support\logs\davinci_resolve.log`)
+steht dazu die eigentliche Ursache:
+`GPU.SingleBoardMgr | ERROR | Exception caught while executing Fusion algorithms:
+No frame available for MediaOut1`.
+
+**Ursache:** Ein Clip mit Fusion-Composition (im Fall: ein **Anpassungsclip** mit
+Fusion-`Blur`) liefert am **allerletzten Frame der Comp** kein Bild — `MediaIn1` hat dort
+nichts mehr zu liefern, `MediaOut1` bleibt leer, der Render bricht ab. Betroffen ist nur der
+eine Frame; alles davor und danach rendert.
+
+**Lösung (per API, eine Zeile):** am `MediaIn` der Comp **HoldLastFrame** einschalten —
+Fusion hält dann den letzten vorhandenen Frame, statt ins Leere zu greifen:
+```python
+it = tl.GetItemListInTrack('video', 2)[0]          # der Clip mit der Comp
+c  = it.GetFusionCompByIndex(1)
+mi = [v for v in c.GetToolList().values() if v.ID == 'MediaIn'][0]
+mi.SetInput('HoldLastFrame', 1.0)                  # setzt auch TOOLI_Clip_ExtendLast = 1
+```
+In der GUI: Fusion-Seite → `MediaIn1` → Inspector → **Hold Last Frame** = 1.
+
+**Was NICHT hilft** (alles durchgetestet, damit es niemand nochmal probiert):
+Comp-Range verlängern (`COMPN_GlobalEnd`/`COMPN_RenderEnd` +1), den Blur-Node auf
+`PassThrough`, die Maske auf `PassThrough`, die `AudioDisplay`-Tools abschalten, **oder die
+ganze Videospur deaktivieren** — der Fehler kommt jedes Mal identisch wieder.
+
+**Vorgehen zum Eingrenzen** (schnell, ohne den vollen Film zu rendern): kleine Testrender per
+API auf einzelne Frames legen, den Job danach wieder löschen:
+```python
+proj.SetRenderSettings({'MarkIn': F, 'MarkOut': F, 'TargetDir': scratch, 'CustomName': 'test'})
+jid = proj.AddRenderJob(); proj.StartRendering([jid], isInteractiveMode=False)
+# pollen bis JobStatus in ('Abgeschlossen','Fehlgeschlagen'), dann proj.DeleteRenderJob(jid)
+```
+So ist der Schuldige in ein paar Minuten auf **einen** Frame eingegrenzt. Achtung:
+`SetRenderSettings` verändert die sichtbaren Deliver-Einstellungen — hinterher auf den
+echten Zielordner/Bereich zurückstellen. **`proj.SaveProject()` gibt es nicht** —
+es heißt `pm.SaveProject()`.
+
+**Nach dem Fix:** Die bereits fehlgeschlagenen Aufträge in der Renderliste stehen weiter auf
+„Fehlgeschlagen" und starten nicht von selbst neu — der Nutzer muss sie in der Deliver-Seite
+per **Rechtsklick → „Renderauftrag zurücksetzen"** zurücksetzen (per API nicht möglich).
+
+**⭐ Clip trimmen, obwohl die API kein Trimmen kann (16.08.2026, Projekt-A).**
+`TimelineItem` hat kein `SetStart`/`SetEnd`/`SetDuration` — einen Clip zu kürzen geht scheinbar
+nur von Hand. **Doch: Blade per Tastatur + Löschen per API** funktioniert sauber und
+frame-genau, ohne Ripple und ohne Maus:
+
+```python
+# 1. alle Spuren AUSSER der Zielspur sperren -> der Blade trifft nur diese eine
+for t in ('video','audio'):
+    for n in range(1, tl.GetTrackCount(t)+1):
+        if not (t == 'video' and n == ZIEL): tl.SetTrackLock(t, n, True)
+resolve.OpenPage('edit')
+tl.SetCurrentTimecode('01:00:13:21')        # exakt der Schnittpunkt
+# 2. Blade:  py keys.py ctrl+b
+# 3. hinteren Teil per API loeschen, rippleDelete=False -> nichts verschiebt sich
+hinten = [i for i in tl.GetItemListInTrack('video', ZIEL) if i.GetStart() == SCHNITT][0]
+tl.DeleteClips([hinten], False)
+# 4. Spuren wieder entsperren
+```
+
+⚠️ **Zwei Details:** (a) `tl.SetCurrentTimecode` direkt nach `resolve.OpenPage()` wird
+**verschluckt** — kurz warten und den Timecode danach **gegenlesen**, sonst schneidet der Blade
+an der alten Position. (b) Hat der Clip eine **Fusion-Comp**, zieht deren Range beim Trimmen
+automatisch mit (`COMPN_GlobalEnd`), die Keyframes bleiben in Comp-Zeit stehen — danach am
+**neuen** letzten Frame einen Testrender fahren (siehe „No frame available for MediaOut1").
+Vorher zur Sicherheit `tl.Export(pfad, resolve.EXPORT_DRT)` in den Scratchpad.
+
+**⭐ Bevor ein Node/Effekt abgeschaltet wird: seine Wirkung MESSEN (16.08.2026).**
+`GetToolsInNode(n)` sagt nur, *welche* Werkzeuge im Node stecken — nicht, ob sie etwas tun,
+und `GetNodeEnabled` gibt es gar nicht. Ob im selben Node noch etwas Gewolltes sitzt (eine
+Verdunkelung, eine Korrektur), zeigt nur der Bildvergleich: Frame exportieren, `SetNodeEnabled`
+umschalten, zweiten Frame exportieren, Differenz rechnen — an mehreren Stellen des Clips, weil
+Power Windows und Keyframes zeitlich begrenzt wirken können.
+
+```python
+d = np.abs(a - b).mean(axis=2)      # a/b = Frames mit Node an/aus
+print(d.mean(), d.max(), (d > 3).sum())
+```
+Im konkreten Fall war die Abweichung an allen fünf Messpunkten **exakt 0** — der OFX-Node war
+wirkungslos und konnte gefahrlos aus. Ohne die Messung wäre das Abschalten ein Blindflug.

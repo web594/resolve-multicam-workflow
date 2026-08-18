@@ -6,8 +6,8 @@ import os, sys, json, subprocess
 import numpy as np
 
 SR = 1600; BIN = 16; ENV_SR = SR // BIN; FPS = 30000/1001
-ROOT = r"E:\Projekt-B-1"
-CACHE = r"C:\claude\resolve-prep\Projekt-B\cache"
+ROOT = r"E:\Projekt-B-1 Projekt-B"
+CACHE = r"C:\claude\resolve-prep\projekt-b\cache"
 os.makedirs(CACHE, exist_ok=True)
 
 REF = os.path.join(ROOT, "dr10L", "001_181212.wav")
@@ -92,6 +92,6 @@ for n in CAMS:
             "ok":bool(np.median(pe)>0.45 and spread<0.5)}
 
 json.dump({"ref":"ton (001_181212.wav)","fps":FPS,"sources":res},
-          open(r"C:\claude\resolve-prep\Projekt-B\offsets.json","w",encoding="utf-8"),
+          open(r"C:\claude\resolve-prep\projekt-b\offsets.json","w",encoding="utf-8"),
           indent=2,ensure_ascii=False)
 print("\nok:",{n:res[n]["ok"] for n in res}, flush=True)

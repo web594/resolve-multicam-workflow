@@ -1,6 +1,6 @@
 # Vorlagen-Skripte
 
-Herkunft: Projekt **Projekt-B-1** (sauberstes, vollständigstes Projekt, 2 Kameras).
+Herkunft: Projekt **Projekt-B-1 Projekt-B** (sauberstes, vollständigstes Projekt, 2 Kameras).
 Alle Skripte sind lauffähig — sie brauchen nur die **Kopf-Konstanten** angepasst.
 
 **Vorgehen:** ganzen Ordner nach `C:\claude\resolve-prep\<kurzname>\` kopieren, Konstanten
@@ -23,9 +23,9 @@ anpassen, in dieser Reihenfolge laufen lassen.
 - `mcbuild` setzt voraus, dass der **Multicam-Clip von Hand in der GUI** angelegt wurde
   (Perspektivensync = Timecode). Das **Angle-Mapping ist projektabhängig** und muss ausgelesen
   und in `patch_mc.py` eingetragen werden.
-- Vergleichsmaterial: `C:\claude\resolve-prep\{Projekt-B,Projekt-C,Projekt-A}\` — dort stehen
-  Varianten (negative Offsets bei Projekt-A, 4 Kameras + LUT-Generatoren + Schwarzloch-Reparatur
-  bei Projekt-C).
+- Vergleichsmaterial: `C:\claude\resolve-prep\{projekt-b,projekt-c,projekt-a}\` — dort stehen
+  Varianten (negative Offsets bei projekt-a, 4 Kameras + LUT-Generatoren + Schwarzloch-Reparatur
+  bei projekt-c).
 
 ## Wenn eine Vorlage besser wird
 

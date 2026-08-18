@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""#N Aufbau eines Thema-Y - Schnittzeichnung (Daten aus Folie <nr>)."""
+"""#3 Aufbau eines Thema-Y - Schnittzeichnung (Daten aus Folie <nr>)."""
 import random
 from PIL import Image, ImageDraw
 from stil_modul import *
@@ -15,7 +15,7 @@ DYC = -33*S      # Bildunterschrift
 
 img = background()
 d = ImageDraw.Draw(img)
-titel(d, "SO IST EIN Thema-Y AUFGEBAUT",
+titel(d, "SO IST EIN THEMA-Y AUFGEBAUT",
       "ROHR · MINERALIEN · HOLZKOHLE – IM WECHSEL GESCHICHTET", y=185 + DYT//S)
 
 CX = int(W*0.33)

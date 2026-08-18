@@ -315,6 +315,17 @@ die jeweilige Reihe erfragen oder aus einer früheren Folge **derselben** Reihe 
 Die folgenden Beispielwerte stammen aus der Reihe Projekt-B und gelten nur dort: 
 
 1. **Arbeitskopie `<Projekt> Multicam auswahl`** anlegen (Duplikat der Multicam-Schnitt-Timeline).
+   ⚠️ **Erst anlegen, wenn der Nutzer den `Multicam Schnitt` als fertig bestätigt hat** — nicht
+   automatisch im Zuge der Pipeline (Nutzer, 06.08.2026, s. SKILL.md Punkt 8). Der Zweck der
+   Kopie ist, dass danach genau daraus entfernt wird, was nicht in den fertigen Film soll —
+   eine zu früh angelegte Kopie spiegelt nur einen Zwischenstand.
+   ⭐ **NICHT per `ImportTimelineFromFile`/Re-Export duplizieren** (Projekt-J 06.08.2026,
+   s. `fallstricke.md`) — das baut den kompletten Multicam-Unterbau ein zweites Mal, mit einem
+   NEUEN Multicam-Clip und neuen „…import 1"-Winkel-Kopien **ohne** den bereits gesetzten
+   Grade. Stattdessen: leere Timeline anlegen, `AppendToTimeline` mit
+   `mediaPoolItem = derselbe Multicam-Clip` und je Originalclip
+   `startFrame=item.GetLeftOffset(), endFrame=+GetDuration()` — referenziert denselben
+   (gegradeten) Multicam-Clip, keine Duplikate.
    Dort wird gefeilt — die gelieferte `… Multicam Schnitt` bleibt als unveränderter Stand liegen.
    **In der Kopie darf geschnitten werden** (das ist nicht destruktiv, das Original bleibt).
 2. **Vorlauf am Anfang-Marker abtrennen** (bei Projekt-B-2 wurde exakt am Marker `Anfang` geschnitten,

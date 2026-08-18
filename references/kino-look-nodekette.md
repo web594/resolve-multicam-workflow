@@ -174,3 +174,30 @@ Skriptweg gibt: **Node 4 und die Shared-Node-Verknüpfung** — und selbst die b
    Korrekturwerte wieder numerisch setzen.
 6. LUT-Interpolation auf tetraedrisch — Nutzer, 1 Klick.
 7. Verifizieren: Frame rendern, Kameras gegeneinander messen (Bücherwand/neutrale Fläche).
+
+## ⚠️ Die Kette ist NICHT kameraunabhängig — FilmConvert je nach Kamera dosieren
+
+**Nutzer-Erkenntnis 13.08.2026 (nach Projekt-I Projekt-I, Sony CX900E/AX100):**
+
+> „FilmConvert auf Default verträgt sich mit CX900E/AX100-Aufnahmen nicht so gut, die Farben
+> werden dadurch unnatürlich. Ich habe es stark von der Intensität heruntergesetzt. FilmConvert
+> in Verbindung mit Sony FS7 II hat ganz gut funktioniert. Es kann somit nicht jede Aufnahme
+> gleich behandelt werden, je nach Kamera-Art."
+
+| Kamera | FilmConvert-Einstellung | Ergebnis |
+|---|---|---|
+| **Sony FS7 II** (S-Log3) | Make Sony / Model FS7 / Profile S-Log3 | **gut** — dafür ist `kino_look_fs7_v1.drx` gebaut |
+| **Sony CX900E / AX100** (Rec.709-AVCHD) | Make/Model **Default**, Profile „Standard sRGB" | **Farben unnatürlich** → Intensität **stark herunter** |
+
+Der Grund: FilmConvert rechnet gegen ein **Kameraprofil**. Ohne echtes Profil passt die
+Farbtransformation nicht zum Material. Die Rec709-Fassung `kino_look_rec709_v1_1.1.1.drx`
+löst nur das **Crushen/Absaufen** (Log-Dekode raus), **nicht** das Farbproblem.
+
+**Regel:** Vor jedem Look-Transfer klären, von **welcher Kamera** das Material stammt.
+Bei Rec.709-Consumer-Camcordern FilmConvert **schwach dosieren oder weglassen** und den
+Filmcharakter über die übrigen Kettenglieder holen (OSIRIS-Finish, Halation/Film Look Creator,
+Primärkorrektur). Ergebnis immer am **gerenderten Frame** prüfen, nie am Viewer.
+
+⭐ **Offene Aufgabe (Nutzerwunsch):** eine **eigene Look-Variante für CX900E/AX100 / Rec.709-
+Consumer-Camcorder** erarbeiten, statt die FS7-Kette nur abzuschwächen — beim nächsten solchen
+Projekt gemeinsam mit dem Nutzer angehen und als eigene DRX sichern.

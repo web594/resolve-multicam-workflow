@@ -6,8 +6,8 @@ Standard 'weit' (Leitkamera). Cutaways mit 'seite' an Absatz-Pausen + Zwang nach
 Schnittgrenzen liegen in den Wortpausen (Stille). Ausgabe: cut_plan.json = [{start,end,angle}]."""
 import json
 
-WRD  = r"C:\claude\resolve-prep\Projekt-B-2\words.json"
-OUTP = r"C:\claude\resolve-prep\Projekt-B-2\cut_plan.json"
+WRD  = r"C:\claude\resolve-prep\projekt-b2\words.json"
+OUTP = r"C:\claude\resolve-prep\projekt-b2\cut_plan.json"
 
 # --- RUHIGER SCHNITT (Nutzer-Vorgabe 27.07.2026) -------------------------------
 # Beim Projekt-A-Schnitt kamen manche Schnitte zu frueh: nach einem Schnitt braucht der

@@ -19,7 +19,7 @@ from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
 S = 2
 W, H = 2304*S, 1296*S
-OUT = os.environ.get("GR_OUT", r"E:\JJMMTT Reihe-R-alexander\renderings\#3 Thema-Y")
+OUT = os.environ.get("GR_OUT", r"E:\Reihe-R Reihe-R\renderings\#3 Thema-Y")
 
 BG_IN  = (16, 40, 70)
 BG_OUT = (5, 12, 24)

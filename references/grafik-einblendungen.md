@@ -139,16 +139,16 @@ Kurzhinweis im Comments-Feld.** Erst per Hand (29.07.2026) aufgeräumt, weil sic
 Grafiken aus #1–#4 alle unsortiert in Master-Root stapelten und `place`s
 Namensabgleich (s. u.) prompt eine fremde Folge überschrieben hat. `overlay_tools.py
 place` erledigt beides automatisch:
-- **Zielordner** = Elternordner-Name der Quelldatei (z. B. `.../#N Thema-Y/xxx.mov`
-  → Mediathek-Unterordner „#N Thema-Y"; wird angelegt, falls er fehlt).
+- **Zielordner** = Elternordner-Name der Quelldatei (z. B. `.../#3 Thema-Y/xxx.mov`
+  → Mediathek-Unterordner „#3 Thema-Y"; wird angelegt, falls er fehlt).
 - **`--fuer "kurzer Hinweis"`** schreibt ins `Comments`-Feld des Clips (in der
-  Mediathek als Spalte einblendbar), z. B. `"#N Thema-Y, ab 0:41 - Aufbau
+  Mediathek als Spalte einblendbar), z. B. `"#3 Thema-Y, ab 0:41 - Aufbau
   Thema-Y"`. Ohne Angabe wird automatisch `Timeline @ Frame X (Track Y)`
   eingetragen — besser als nichts, aber ein sprechender Hinweis ist klarer.
 
 ```bash
 py overlay_tools.py place g3_aufbau_Thema-Y.mov --timeline 19 --track 4 --at 1433 \
-  --frames 359 --fuer "#N Thema-Y, ab 0:41 - Aufbau Thema-Y im Schnitt"
+  --frames 359 --fuer "#3 Thema-Y, ab 0:41 - Aufbau Thema-Y im Schnitt"
 ```
 
 **⭐⭐ Falle (gefunden 29.07.2026):** Der Duplikat-Check vor dem Import darf **nur
@@ -172,7 +172,7 @@ das Gegenteil.)
 
 ### Instagram-Kurzversion (9:16)
 
-⭐ **Seit #N (28.07.2026) macht das `vorlagen/instagram_kurz.py` komplett allein:**
+⭐ **Seit #3 (28.07.2026) macht das `vorlagen/instagram_kurz.py` komplett allein:**
 Spalte nachmessen → Crop + Skalieren + ASS einbrennen → Musik-Check → −14 LUFS
 zweistufig → `ffmpeg Anweisung …txt` mit den echten Messwerten schreiben.
 
@@ -206,7 +206,7 @@ ffmpeg -y -i "<hochf angez>.mp4" \
 (`volume=-20dB` unter der Stimme).
 
 ### Untertitel (ASS)
-Stil-Vorlage steht im Memory `Reihe-R` (Candara 68, weicher Schatten,
+Stil-Vorlage steht im Memory `Reihe-R-projekt` (Candara 68, weicher Schatten,
 `\blur7\fad(200,150)` + Größerwerden 96→100 %). **Kein `fontsdir`** angeben — sonst fällt
 libass auf eine Ersatzschrift zurück. Whisper-Fehler vor dem Einbrennen korrigieren
 (z. B. „Route/Routengeher" → „Rute/Rutengeher"). Text **kürzen und zuspitzen**, nicht das
@@ -235,7 +235,7 @@ py vorlagen/verify_overlays.py --timeline 19 --ende 5962 --ref 12
 
 Er findet automatisch: **Schwarzbild-Löcher** (frameweise über ALLE Videospuren —
 Anpassungsclips zählen nicht als Bild; genau so wurde das 1-Frame-Loch vor der
-Endkarte in #N gefunden), Überlappungen, **echte** Offline-Clips (Datei fehlt —
+Endkarte in #3 gefunden), Überlappungen, **echte** Offline-Clips (Datei fehlt —
 Generatoren/Fusion-Clips ohne MediaPoolItem sind KEIN Offline), Ton-Deckung bis zum
 Soll-Ende (ist die Endkarte stumm?) und mit `--ref` den **1-Frame-Sync-Versatz der
 Sprachspur** nach einem eingefügten Kaltstart.
@@ -255,7 +255,7 @@ Sprachspur** nach einem eingefügten Kaltstart.
 
 ## 8. Das Auslieferungspaket — ungefragt mitliefern
 
-Bei #N hat der Nutzer jeden dieser Punkte einzeln nachgefordert. Sie sind bei jeder
+Bei #3 hat der Nutzer jeden dieser Punkte einzeln nachgefordert. Sie sind bei jeder
 Folge gleich, also von vornherein mitbauen (siehe SKILL.md, stehende Antwort 11):
 
 | Teil | Wie |
@@ -269,10 +269,10 @@ Folge gleich, also von vornherein mitbauen (siehe SKILL.md, stehende Antwort 11)
 
 ---
 
-## 7. Vertikale Balance — seit #N AUTOMATISCH, nicht mehr nachmessen
+## 7. Vertikale Balance — seit #3 AUTOMATISCH, nicht mehr nachmessen
 
 Beim Bauen entsteht sonst zu viel Luft **oben** und zu wenig **unten**: der Titel sitzt
-auf fester Höhe, die Bildunterschrift wird ans Ende gesetzt. Bei #N hatten sechs von
+auf fester Höhe, die Bildunterschrift wird ans Ende gesetzt. Bei #3 hatten sechs von
 sieben Vollbild-Grafiken 147 px Rand oben, aber nur 68–102 px unten — der Nutzer sah es
 sofort und musste zweimal nachfragen.
 

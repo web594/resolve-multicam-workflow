@@ -17,10 +17,12 @@ nehmen, nicht neu erfinden.** Arbeitsordner pro Projekt: `C:\claude\resolve-prep
    node-add, Fusion, Titel-Vorlage) und wo die harten API-Grenzen sind.
 3. `references/fallstricke.md` — teuer erlernte Fallen. **Vor jedem Schritt kurz prüfen,
    ob dort etwas zum aktuellen Schritt steht.** Das spart die meisten Sackgassen.
-4. `references/kino-look-nodekette.md` — **die Grading-Kette als Rezept** (FilmConvert →
-   Primär → OSIRIS-LUT → Gesicht → Film Look Creator), mit gemessenen Werten, der
-   DRX-Vorlage (**ganze Kette in 0,04 s statt einer Stunde Klicken**) und der Tabelle
-   „was macht Claude, was der Nutzer". Vor jedem Grading lesen.
+4. ⭐ `references/farbgebung.md` — **welcher Look-Skill genommen wird**: Standard ist
+   `resolve-kino-look-nodekette`, Ersatz ist `resolve-lut-look-kette`; gekaufte LUTs/Werkzeuge
+   zuerst; und die **Kamera-Prüfung** (Rec.709-Consumer-Camcorder → Filmemulation gar nicht oder
+   nur ganz wenig %). **Vor jedem Grading lesen.**
+   Danach `references/kino-look-nodekette.md` — dieselbe Kette als Rezept mit allen gemessenen
+   Werten und der DRX-Vorlage (**ganze Kette in 0,04 s statt einer Stunde Klicken**).
 5. ⭐ `references/vorbild-projekt.md` — **das Vorbild für Multicam-Projekte**: Ordnerbau,
    Soll-Zustand der Mediathek (inkl. Bin **`Anlegen`**), der bewährte Farb-Ablauf und die
    **Grenze Claude ↔ Mensch**. Bei jedem Multicam-Projekt lesen — beschreibt genau den
@@ -42,7 +44,7 @@ nehmen, nicht neu erfinden.** Arbeitsordner pro Projekt: `C:\claude\resolve-prep
 | 4 | Transkript (faster-whisper large-v3, CUDA) | `vorlagen/transcribe.py` |
 | 5 | Auto-Schnittplan aus Sprechpausen (**ruhige Parameter, s. u.**) | `vorlagen/make_cutplan.py` |
 | 6 | Schnitt-Timeline. **Bei ≥2 Kameras IMMER Multicam-mit-Schnitten — Multicam-Clip per DRT-Bau, NICHT per GUI** | `vorlagen/mcbuild/build_mc_drt.py` |
-| 7 | Verifizieren (Lücken, Überlappungen, Winkel, **Schwarzbild-Render**), dann Grading (3-LUT-Kette, **geteilte Nodes**) | `vorlagen/verify_cut.py` |
+| 7 | Verifizieren (Lücken, Überlappungen, Winkel, **Schwarzbild-Render**), dann Grading (Skill `resolve-kino-look-nodekette`, **geteilte Nodes**) | `vorlagen/verify_cut.py`, `references/farbgebung.md` |
 | 8 | Nachbearbeiten: **richtigen Anfang finden, Organisatorisches raus, verwackelte/unscharfe Winkel tauschen**; Titel-Vorspann (Overlay) | `references/ablauf.md` |
 | 8b | **Aufräumen + Übergabe:** Zwischen-Timelines in den Bin **`Anlegen`**, Soll-Zustand gegen das Vorbild prüfen | `references/vorbild-projekt.md` |
 | 9 | **Grafik-Einblendungen + Auslieferung** (Infografiken aus dem Transkript, Instagram-Kurz 9:16, Untertitel, −14 LUFS) | `references/grafik-einblendungen.md`, `vorlagen/overlay_tools.py`, `vorlagen/infografik/`, `vorlagen/verify_overlays.py`, `vorlagen/instagram_kurz.py` |
@@ -98,19 +100,23 @@ fertigen, gegradeten Multicam-Schnitt mit Titel **selbstständig** an.
 1. **≥2 Kameras → IMMER die geschnittene Multicam liefern** (echter Multicam-Clip per DRT-Bau,
    `vorlagen/mcbuild/`), damit der Nutzer beim Bearbeiten jeden Clip auf eine andere Kamera umschalten
    kann. Nicht mehr fragen „Nesting oder Multicam".
-2. **Look — Variante A ist der Standard, Richtung NICHT erfragen, einfach bauen:**
-   - ⭐ **Variante A — der bewährte Farb-Ablauf** (Nutzer, 04.08.2026 am Vorbildprojekt:
-     „ist ganz gut geworden"): die 5-Node-Kette
-     FilmConvert Nitrate → Primärkorrektur → OSIRIS-Finish-LUT (35–45 %) → Gesicht-Sekundär →
-     Film Look Creator (Halation/Vignette). Komplett per DRX übertragbar (**0,04 s**).
-     Rezept + Werte + Vorlage: `references/kino-look-nodekette.md`, `vorlagen/kino_look/`.
+2. **Look — der Standard steht fest, Richtung NICHT erfragen, einfach bauen** (Nutzer,
+   18.08.2026). Einzelheiten und die Kamera-Prüfung: `references/farbgebung.md`.
+   - ⭐ **Standard: Skill `resolve-kino-look-nodekette`** — die 4-Node-Kette
+     Filmemulation → Weißabgleich+Helligkeit (regelbar) → Finish-LUT (40 %) →
+     Film-Look-Erzeuger (Halation/Vignette). Komplett per DRX übertragbar (**0,04 s**).
      Braucht Projekt auf **DaVinci YRGB** (nicht Color Managed).
-   - **Variante B (ARRI-Umweg) — NOCH NICHT FERTIG:** 1) auf **ARRI** wandeln → 2) **Filmstock**-
-     Emulation → 3) **Kino-LUT** obendrauf. LUT-Pfade/Details im Memory
-     `grading-look-kette-praeferenz`. **Status (Nutzer, 04.08.2026): eine ernstzunehmende zweite
-     Möglichkeit, die aber erst noch genauer angesehen werden muss.** Deshalb **nicht** von sich
-     aus für ein Kundenprojekt wählen — nur auf ausdrücklichen Wunsch.
-   → **Immer Variante A bauen**, ohne Rückfrage. Nur die Feinhelligkeit bestätigen lassen.
+   - **Ersatz: Skill `resolve-lut-look-kette`** — dieselbe Idee als reine LUT-Kette
+     (Log→ARRI Rec.709 · regelbarer Node · Rec.709→ARRI LogC · Filmemulation · Kino-Look).
+     Nehmen, wenn Plugins fehlen/nicht zur Kamera passen, eine Reihe schon darauf aufgebaut ist
+     oder der Nutzer es wünscht.
+   - **In beiden Ketten zuerst die GEKAUFTEN LUTs und Werkzeuge**; die freien Fassungen nur,
+     wenn ein Werkzeug fehlt oder die Kamera kein Profil im Plugin hat.
+   - ⚠️ **Vor dem Bauen prüfen, welche Kameras im Projekt liegen.** Log-Material (FS7 II,
+     S-Log3) → Kette wie vorgesehen. **Rec.709-Consumer-Camcorder (Sony AX100, CX900E und
+     ähnliche) → Filmemulation gar nicht oder nur ganz wenig %**, sonst werden die Farben
+     unnatürlich; Filmcharakter über die übrigen Nodes holen.
+   → **Immer die Nodekette bauen**, ohne Rückfrage. Nur die Feinhelligkeit bestätigen lassen.
 3. **LUTs NUR für diese drei Look-Schritte.** Jede Korrektur (Weißabgleich, Helligkeit, Farbstich/
    Magenta/Blau, Sättigung, Kontrast) als **regelbarer Resolve-Node-Wert**, nie als zusätzliche
    gebackene LUT — damit nachvollziehbar bleibt, was vom Original abweicht, und einzelne Werte
@@ -128,11 +134,19 @@ fertigen, gegradeten Multicam-Schnitt mit Titel **selbstständig** an.
    Also **nie einen Titeltext aus einem anderen Projekt übernehmen**, sondern für die jeweilige
    Reihe erfragen (bzw. aus einer früheren Folge **derselben** Reihe ablesen). Nur die
    *Technik* ist allgemein (`titel_overlay.py`, OVERLAY statt Ripple).
-8. **Nach dem Multicam-Schnitt selbst mitliefern** (das musste der Nutzer bei Projekt-B-2 noch von
-   Hand machen — siehe `ablauf.md` Schritt 8): eine **Arbeitskopie „… Multicam auswahl"**, darin
-   den **Vorlauf am Anfang-Marker abtrennen** (in der KOPIE schneiden ist erlaubt — das Original
-   bleibt unangetastet), und die **„… zus"-Endmontage** anlegen. Titel/Einspieler dort nur
-   einbauen, wenn Text bzw. Material für dieses Projekt bekannt sind.
+8. ⚠️ **Arbeitskopie „… Multicam Auswahl" NICHT automatisch/vorzeitig anlegen** (Nutzer,
+   06.08.2026, nach Projekt-J): Claude baute sie bisher direkt im Zuge der Pipeline mit —
+   das ist **falsch**. Der Sinn der „Auswahl" ist, dass **aus ihr** hinterher das rausgenommen
+   wird, was nicht in den fertigen Film soll (Organisatorisches, verworfene Winkel, der
+   Vorlauf) — übrig bleibt am Ende **die Auswahl**. Legt Claude diese Kopie schon an, **bevor**
+   der `… Multicam Schnitt` durch die Nachbearbeitung (Schritt 8 unten: richtiger Anfang,
+   Qualitätscheck, ggf. weitere Korrekturen) wirklich fertig ist, spiegelt die Kopie einen
+   Zwischenstand — spätere Änderungen am `Schnitt` laufen an ihr vorbei. **Regel: die
+   Arbeitskopie erst anlegen, wenn der Nutzer den `Multicam Schnitt` als fertig bestätigt hat**
+   (explizit fragen, nicht von selbst loslegen). Erst dann: Vorlauf am Anfang-Marker abtrennen
+   (in der KOPIE schneiden ist erlaubt — das Original bleibt unangetastet), danach ggf. die
+   **„… zus"-Endmontage**. Titel/Einspieler dort nur einbauen, wenn Text bzw. Material für
+   dieses Projekt bekannt sind. Bauweise der Kopie (kein Re-Import!): `ablauf.md` Schritt 8.1.
 8a. ⭐ **Mediathek aufräumen — Bin `Anlegen`** (Nutzer, 04.08.2026). Zum Schluss verschiebt Claude
    die nur beim Anlegen gebrauchten Zwischen-Timelines — `<NAME> mitte`, `<NAME> seite`,
    `<NAME> ton`, `<NAME> Schnitt` — per `mp.MoveClips` in einen Bin **`Anlegen`**. Nicht löschen,
@@ -186,9 +200,10 @@ fertigen, gegradeten Multicam-Schnitt mit Titel **selbstständig** an.
     eine andere Folge MUSS anders heißen. „Instagram Kurz #4" reicht NICHT (könnte alles sein).
 
     (b) ⭐ **FILME tragen vorne das Projektdatum.** Der sechsstellige Projektcode `JJMMTT` aus dem
-    Projektordner steht **am Anfang** des Dateinamens — daran findet man den Film beim Suchen
-    wieder: `JJMMTT #5 Thema-Y, Kurz 1.1 15t Instagram (Text, Musik, -14 LUFS).mp4`. Fehlt er in
-    der Quelle, wird er vorangestellt; `instagram_kurz.py` macht das automatisch (Projektcode per
+    Projektordner (z. B. `Reihe-R …`) steht **am Anfang** des Dateinamens — daran findet man den
+    Film beim Suchen wieder:
+    `Reihe-R #5 <Folge>, Kurz 1.1 15t Instagram (Text, Musik, -14 LUFS).mp4`. Fehlt er in der
+    Quelle, wird er vorangestellt; `instagram_kurz.py` macht das automatisch (Projektcode per
     Regex `[\\/](\d{6})[ _-]` aus dem Pfad).
 
     (c) **Guten Quellnamen übernehmen, Zusatz hinten anhängen** — nichts ersetzen:
@@ -202,9 +217,9 @@ fertigen, gegradeten Multicam-Schnitt mit Titel **selbstständig** an.
     z. B. `Standbild 2026-08-03 170627 für tb 1_2.1.1.png` — daraus darf **kein** Titelbildname
     werden. **Enddateien** (Titelbilder, Grafiken, Videos, Texte) bekommen einen **neu gebildeten**
     Namen: `<Projektname/Folge> <Art der Datei> <Details> <Version>`, z. B.
-    `Titelbild #5 Thema-Y v2_4K.jpg`. Beim **Zwischenprodukt selbst** ist ein Datums-/Zeitname noch
-    in Ordnung, solange es im zugehörigen `renderings`-Ordner liegt (dann ist die Zuordnung aus dem
-    Ordner erschließbar) — bei Enddateien nicht.
+    `Titelbild #5 Thema-Z v3_4K.jpg`. Beim **Zwischenprodukt selbst** ist ein Datums-/Zeitname
+    noch in Ordnung, solange es im zugehörigen `renderings`-Ordner liegt (dann ist die Zuordnung
+    aus dem Ordner erschließbar) — bei Enddateien nicht.
 
     (f) ⛔ **Nur EIGENE Dateien umbenennen.** Die Regeln gelten für Dateien, die Claude selbst
     erzeugt — dort **gleich beim Anlegen** einen guten Namen vergeben. **Vom Nutzer erzeugte
@@ -217,8 +232,8 @@ fertigen, gegradeten Multicam-Schnitt mit Titel **selbstständig** an.
     **Praktisch in den Skripten:** `instagram_kurz.py` (Quelle = fertiger Film) leitet den
     Ausgabenamen aus der Quelle ab (`os.path.splitext(quelle)[0] + " <Zusatz>"`) und stellt das
     Projektdatum voran; `make_thumb_*.py` (Quelle = Standbild) setzt `OUTNAME` als sprechenden
-    Namen und sucht die Quelle über ein `MATCH`-Fragment — nie fest verdrahtete generische Namen,
-    aber auch nie den kryptischen Standbildnamen übernehmen.
+    Namen und sucht die Quelle über ein `MATCH`-Fragment.
+    Details/Beispiele im Memory `dateinamen-konvention`.
 
 **Nur das noch beim Nutzer lassen:**
 - Die **subjektive Helligkeits-/Richtungsfeinheit**: Mitte-Frame zeigen, kurz „heller/dunkler?".
@@ -240,7 +255,7 @@ fertigen, gegradeten Multicam-Schnitt mit Titel **selbstständig** an.
   arbeitet damit weiter.
 - Am Ende der Sitzung: Projekt-Memory unter
   `C:\Users\<benutzer>\.claude\projects\C--claude\memory\` anlegen/aktualisieren (Muster:
-  `Projekt-B-projekt.md`) und in `MEMORY.md` verlinken.
+  `projekt-b-projekt.md`) und in `MEMORY.md` verlinken.
 
 ## Diesen Skill weiterentwickeln
 
