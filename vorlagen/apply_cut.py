@@ -84,7 +84,20 @@ for a,s,e in mrg:
     if e0 <= s0: continue
     mp.AppendToTimeline([{"mediaPoolItem":SRC[a],"startFrame":s0,"endFrame":e0,"mediaType":1}])
     nclip+=1
-mp.AppendToTimeline([{"mediaPoolItem":SRC["ton"],"startFrame":first_t,"endFrame":last_t,"mediaType":2}])
+# ⭐⭐ Ton GENAUSO stueckeln wie das Bild (Projekt-M 23.08.2026).
+# Der Schnitt legt die Clips ohne Luecken hintereinander, ueberspringt aber Stellen ohne
+# Bild (Blockgrenzen, Kamera-Ausfaelle). Ein DURCHGEHENDER Tonclip laeuft dadurch immer
+# weiter weg - bei Projekt-M am Ende 95 Sekunden, und es faellt beim Scrubben kaum auf.
+ber = []
+for a, s, e in mrg:
+    if ber and ber[-1][1] == s: ber[-1][1] = e
+    else: ber.append([s, e])
+rec = 108000
+for s, e in ber:
+    mp.AppendToTimeline([{"mediaPoolItem":SRC["ton"],"startFrame":s,"endFrame":e,
+                          "mediaType":2,"trackIndex":1,"recordFrame":rec}])
+    rec += e - s
+print(f"  Ton in {len(ber)} Stueck(en) passend zum Bild")
 
 from collections import Counter
 cnt = Counter(a for a,_,_ in mrg)

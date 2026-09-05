@@ -153,15 +153,15 @@ was Zeigen oder Beurteilen ist.**
 | Projekt-Farbeinstellungen setzen | `SetSetting`, Sekunden | Dialog | ✅ **Claude** |
 | Frame prüfen/vergleichen, Messwerte liefern | `rctl frame` + Analyse | Auge | ✅ **Claude** |
 | **Node 4: Qualifizierer + Power Window + Tracking** | Computer-use: langsam, ungenau, motivabhängig | 1–3 min | ❌ **Mensch** |
-| Nodes zu echten Shared Nodes verknüpfen | offen | Rechtsklick ×3 | ❌ **Mensch** |
+| Nodes zu echten Shared Nodes verknüpfen | **1× Rechtsklick per Computer-use, Rest per `CopyGrades`** | Rechtsklick ×N | ✅ **Claude** (seit 24.08.2026, s. u.) |
 | Nodes beschriften | `SetNodeLabel` existiert nicht | Doppelklick + tippen | ❌ **Mensch**, Kosmetik |
-| LUT-Interpolation auf tetraedrisch | nicht in der API | 1 Klick | ❌ **Mensch**, einmalig |
+| LUT-Interpolation auf tetraedrisch | **Computer-use, 4 Klicks** (Shift+9 → Color Management → Look-up-Tables → „3D-LUT-Interpolation" = Tetraedrisch → Speichern) | 1 Klick | ✅ **Claude** (seit 24.08.2026; `GetSetting` kennt den Schlüssel NICHT) |
 | „Heller/dunkler? Look richtig?" | — | — | ❌ **Mensch** |
 
 ⛔ **Nicht per Computer-use nachbauen.** Die Kette per Maus zu klicken (OFX ziehen, Panels
 durchsteppen, Zahlen tippen) dauert Claude weit über eine Stunde und ist fehleranfällig —
 der DRX-Weg erledigt dasselbe in Sekundenbruchteilen. Computer-use nur dort, wo es keinen
-Skriptweg gibt: **Node 4 und die Shared-Node-Verknüpfung** — und selbst die besser vom Nutzer.
+Skriptweg gibt: **Node 4** und der **eine** Rechtsklick, mit dem ein Node zum geteilten Node wird.
 
 ## Ablauf für ein neues Projekt
 

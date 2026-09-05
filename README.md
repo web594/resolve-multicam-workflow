@@ -25,6 +25,11 @@ Feinschnitt und Gestaltung bleiben beim Menschen. Die Tabelle dazu steht in
 ## Was der Skill kann
 
 - **Ton-Sync** je Kamera per Kreuzkorrelation gegen den Hauptton (Offsets als JSON).
+- **Alternativ Timecode-Sync**: tragen die Aufnahmen einen gemeinsamen Timecode, kommen die
+  Offsets direkt aus den Dateien - mit Pflicht-Gegenprobe, weil ein falsch gesetzter
+  Timecode sonst unbemerkt durchrutscht (`vorlagen/tc_pruefen.py`).
+- **Mehrere Aufnahmebloecke** mit je eigenem Versatz (`vorlagen/sync_blocks.py`) und eine
+  **Bild-Ton-Probe** der fertigen Schnitt-Timeline (`vorlagen/sync_pruefen.py`).
 - **Projekt/Bins/Quell-Timelines** je Kamera per Resolve-Python-API.
 - **Transkript** (faster-whisper) -> **Auto-Schnittplan** aus Sprechpausen (ruhiges Schnitt-Tempo).
 - ⭐ **Geschnittene Multicam komplett per Skript** - der Multicam-Clip *und* die Winkel-Schnitte
@@ -34,6 +39,10 @@ Feinschnitt und Gestaltung bleiben beim Menschen. Die Tabelle dazu steht in
   Group. Korrekturen immer als regelbare Node-Werte, nie als zusaetzlich gebackene LUT.
 - **Nicht-destruktive Nachbearbeitung**: Anfang nur per Marker, Loeschkandidaten nur gelb;
   verwackelte/unscharfe Winkel automatisch finden (ffmpeg+numpy) und tauschen.
+- **Abgeleitete Kurzvideos** als echte Multicam mit den Winkeln des Hauptschnitts, damit sich
+  auch dort noch jede Einstellung austauschen laesst (`vorlagen/kurzvideo_drt.py`).
+- **Wackelnde Einstellungen messen und stabilisieren** (`vorlagen/stabilisierung/`) - inklusive
+  der Falle, dass ein Film-Look-Plugin das Bild selbst absichtlich wandern laesst.
 - **Titel-Vorspann** als OVERLAY (ohne Ripple), **Grafik-Einblendungen** und eine
   **9:16-Kurzfassung** fuer Social (Crop, Untertitel, -14 LUFS).
 - **Verifikation** an jeder Stelle: Luecken/Ueberlappungen/Winkelfehler, Schwarzbild-Render-Test,
@@ -111,6 +120,7 @@ Mediathek-Aufraeumen, Arbeitsteilung).
 | `references/kino-look-nodekette.md` | die Grading-Kette als Rezept, mit gemessenen Werten |
 | `references/api-werkzeuge.md` | was die Resolve-API kann - und wo ihre harten Grenzen sind |
 | `references/fallstricke.md` | teuer erlernte Fallen mit Symptom, Ursache, Loesung |
+| `references/timecode-sync.md` | Sync ueber gemeinsamen Timecode (Funk-Timecode am Rekorder) statt Kreuzkorrelation |
 | `references/grafik-einblendungen.md` | Infografiken/Overlays + Auslieferung (lang + 9:16) |
 | `references/historie.md` | Aenderungslog |
 | `vorlagen/` | lauffaehige Skripte (sync, prep, transcribe, cutplan, mcbuild, verify, overlays) |

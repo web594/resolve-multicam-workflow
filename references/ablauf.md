@@ -25,6 +25,24 @@ Mit ffprobe je Quelle klären und dem Nutzer berichten:
 **Timeline-fps wählen:** 59.94 konformt sauber zu 29.97 → 29.97 nehmen, **nicht** 30.0
 (sonst Drift aller Kameras). Standard: 1920×1080, 29.97, DaVinci YRGB / Rec.709 (Scene).
 
+### ⭐ Mehrere Aufnahmeblöcke (Pausen mittendrin)
+
+Bei Tagesveranstaltungen wird oft nach jeder Pause neu gestartet — dann gibt es **je Block**
+einen eigenen Satz Kamerateile und einen eigenen Hauptton-Teil (Projekt-M 23.08.2026: 4 Blöcke,
+3 Kameras, 6 h). Vorgehen:
+
+1. Blöcke zuordnen (Shogun: gleiche `T<nnn>`-Nummer = ein Block; Reihenfolge über die
+   Änderungszeit prüfen, die Nummern laufen **nicht** immer aufsteigend).
+2. **Pro Block einen eigenen Sync-Offset** rechnen — die Pausenlängen unterscheiden sich je
+   Gerät, ein Gesamt-Offset gibt es nicht. Vorlage: `sync_blocks.py` im Projektordner Projekt-M.
+3. **Zeitbasis = der zusammenhängend gelegte Hauptton** (Blockteile ohne Pause hintereinander).
+   Blockstart in Frames = Summe der vorherigen Ton-Längen. Jede Kamera bekommt **eine**
+   Quell-Timeline über alle Blöcke; die Teile werden per `recordFrame` platziert.
+   Damit gilt weiterhin überall: Ton-Frame == Quell-Timeline-Frame, und der Multicam-Bau
+   braucht **gar keine Offsets mehr** (`OFF = 0`).
+4. Am Blockende hört meist eine Kamera früher auf als der Rekorder → dort echte Lücken.
+   Der Schnittplan muss die **Verfügbarkeit je Kamera** prüfen und dann eine andere nehmen.
+
 ## 2. Ton-Sync (`vorlagen/sync.py`)
 
 Onset-Kreuzkorrelation jeder Kamera gegen den Hauptton (Tascam/dr10L), FFT-Grobsuche +
@@ -297,6 +315,20 @@ entscheidet selbst, was tatsächlich raus.
   Timeline). Ist sie brauchbar → auf dem Multicam-Clip den Abschnitt **umschalten**:
   Edit-Seite, Clip anwählen → Rechtsklick → **„Multicam-Perspektive wechseln" → Angle N** (die API
   kann Winkel nicht schalten, dieser GUI-Weg schon; nicht-destruktiv).
+  ⭐⭐ **Zwei Stufen messen — der reine Laplace-Wert reicht NICHT** (Projekt-M 24.08.2026, an 1242
+  Einstellungen gemessen). Stufe 1 (Laplace gegen den Kamera-Median) liefert die Kandidaten,
+  produziert aber **massenhaft Fehlalarme**: eine nahe Einstellung mit weichem Vordergrund
+  (Hinterköpfe) oder viel weißer Wand misst niedrig und ist trotzdem scharf — bei Projekt-M waren
+  von 73 Kandidaten **33 Fehlalarm**. Stufe 2 entscheidet mit einem **inhaltsunabhängigen**
+  Maß: Bild in 12×9 **Kacheln** zerlegen, Laplace-Varianz je Kachel, gewertet wird das
+  **90 %-Quantil** (= die schärfste Zone). Ein scharfes Bild hat irgendwo knackige Kanten, ein
+  unscharfes nirgends. Erfahrungswerte (4K HEVC, auf 960×540 gemessen): **<60 = deutlich
+  unscharf, 60–130 = weich/verdeckt (Auge), >130 = in Ordnung**. Vorlagen: `qual_projekt-m.py`
+  (Stufe 1) und `qual_kachel.py` (Stufe 2) in `C:\claude
+esolve-preplice`.
+  ⭐ **Kein Render nötig:** direkt aus den Quelldateien messen — Cut-Segment → Winkel-Timeline →
+  Quelldatei + Sekunde (`GetLeftOffset`), dann `ffmpeg -ss … -frames:v 6`. Bei 6 h/1242
+  Einstellungen ~30 min statt eines 6-h-Renders.
   ⭐ **Nutzer-Vorgabe: Bewegung/Schwenk der Kamera ist OK — NUR Unschärfe und Wackeln tauschen.**
   Also **nicht** auf reine Bewegung (Frame-Differenz) hin tauschen; die Schärfe-Metrik ist das
   Kriterium. Auch ein unscharfer Vordergrund (jemand läuft kurz durchs Bild) ist ok, solange das

@@ -98,6 +98,94 @@
   korrigierten Clip per `grade-save` neu als Vorlage sichern und auf die übrigen Clips
   verteilen, statt die Original-DRX blind zu übernehmen.
 
+## Timeline per API bauen (AppendToTimeline)
+
+- ⭐⭐ **`endFrame` in einem clipInfo ist EXKLUSIV** (Projekt-M 23.08.2026). Wer nach altem Muster
+  `endFrame: frames-1` schreibt, bekommt **je Teil eine Lücke von genau 1 Frame** — bei 21
+  Kamerateilen 20 schwarze Einzelbilder, die man beim Durchscrubben kaum sieht und die erst im
+  Render auffallen. **Richtig: `endFrame: frames`** (voller Clip), `startFrame: trim`.
+  Gegenprobe: Clips der Timeline durchlaufen und `GetStart()`/`GetEnd()` vergleichen —
+  es darf **keine** Lücke von 1 Frame übrig bleiben.
+- ⭐ **`recordFrame` platziert einen Clip an eine feste Timeline-Position** (statt hinten
+  anzuhängen) — damit lassen sich **mehrere Aufnahmeblöcke mit Lücken in EINE Quell-Timeline**
+  legen. Der Wert ist absolut, also inklusive der 108000 des Start-TC.
+- **Audio-Medien haben keine `Frames`-Eigenschaft** (`GetClipProperty("Frames")` liefert `""`).
+  Länge stattdessen per ffprobe holen und mit der Timeline-fps in Frames rechnen.
+
+## Transkript (faster-whisper)
+
+- ⭐ **Sechs Stunden am Stück hängen.** `model.transcribe()` auf einer 6-h-WAV lieferte nach
+  50 Minuten kein einziges Segment (GPU 0 %, Prozess bei ~10 % einer CPU) — kein Absturz,
+  nur Stillstand. **Fix: in Stücken von 10 Minuten transkribieren** (ffmpeg-Ausschnitt →
+  transcribe → Offset draufrechnen), Ergebnisse je Stück als JSON ablegen. Läuft mit ~26 s
+  je 5 Minuten Ton, ist wiederaufnehmbar und zeigt Fortschritt. Vorlage: `transcribe_chunks.py`
+  im Projektordner Projekt-M.
+
+## Frames prüfen / Schwarzbildtest
+
+- ⚠️ **`ExportCurrentFrameAsStill` direkt nach `SetCurrentTimecode` liefert ein SCHWARZES PNG**,
+  wenn Resolve den 4K-Frame noch nicht dekodiert hat — das sieht wie ein echtes Schwarzbild aus.
+  Bei Projekt-M waren 3 von 24 Stichproben „schwarz“, alle drei mit 4 s Wartezeit einwandfrei.
+  **Also nach dem TC-Sprung ein paar Sekunden warten und jeden Treffer einmal nachprüfen**,
+  bevor man einen Multicam-Fehler diagnostiziert.
+
+## ⭐⭐ Die Schnitt-Timeline ist gegenüber der TONZEIT GESTAUCHT
+
+Der Auto-Schnitt legt die Clips **ohne Lücken** hintereinander, beginnt aber erst beim ersten
+Sprechen (bei Projekt-M Ton-Frame 49 = 1,6 s) und **überspringt jede Stelle ohne Bild** (Blockgrenzen,
+Kamera-Ausfälle — bei Projekt-M 25 s + 59 s + 10 s). Damit gilt **nicht** `Timeline = Ton + 108000`,
+sondern eine stückweise Abbildung. Wer das übersieht, baut drei Fehler auf einmal:
+
+- ⛔ **Ton als EIN durchgehender Clip** → läuft immer weiter weg (bei Projekt-M bis **95 s**). Fällt beim
+  Scrubben kaum auf, weil jeder einzelne Schnitt für sich stimmig aussieht. **Fix:** den Ton in
+  genauso viele Stücke legen wie das Bild zusammenhängende Bereiche hat (`apply_cut.py` macht das jetzt).
+- ⛔ **Marker an Ton-Frames gesetzt** → sitzen bis zu 95 s daneben.
+- ⛔ **Kurzvideos nach Ton-Zeit aus der Schnitt-Timeline geschnitten** → Bild und Ton passen nicht.
+
+**Abbildung immer aus `cut_final.json` bauen** (schreibt `apply_cut.py`):
+```python
+SEG = []; acc = 0
+for x in CUT:                      # {"angle","s","e"} in ton-Frames, fortlaufend gelegt
+    SEG.append((x["s"], x["e"], acc)); acc += x["e"] - x["s"]
+def ton2tl(f):
+    for s, e, t0 in SEG:
+        if s <= f < e: return t0 + (f - s)     # + 108000 fuer den Timecode
+```
+**Gegenprobe (Pflicht):** `vorlagen/sync_pruefen.py` — vergleicht für JEDEN Clip die Ton-Zeit des
+Bildes (`GetLeftOffset()` des Multicam-Clips = Ton-Frame, weil der Multicam bei Ton-Frame 0 beginnt)
+mit der Ton-Zeit der Tonspur an derselben Position. Erwartet: 0 abweichende Clips.
+
+## Kurzvideos / abgeleitete Timelines
+
+- ⛔⛔ **`AppendToTimeline` mit einem Multicam-Clip setzt ALLE Clips auf Angle 1** (Projekt-M 23.08.2026).
+  Die Zieltimeline enthält zwar echte Multicam-Clips (umschaltbar, mit Grade), aber die
+  **Winkelwahl des Hauptschnitts ist weg** — bei 128 Clips fällt das erst beim Ansehen auf.
+  Ursache: die Winkelziffer steht nur im `FieldsBlob` des Clips (hinter `4b616d657261c2a0`
+  = „Kamera"+NBSP) und ist per API nicht setzbar; `TimelineItem` hat keine Multicam-Eigenschaft
+  (Resolve 21 geprüft, die README kennt nur `RotationAngle`).
+  **Fix: über den DRT-Weg bauen** — `vorlagen/kurzvideo_drt.py` (Hauptschnitt als DRT exportieren,
+  die Clipblöcke der gewünschten Passagen mit **unverändertem FieldsBlob** übernehmen,
+  `Start`/`Duration`/`In` neu rechnen) und `vorlagen/kurzvideo_import.py` (importieren, Ton
+  passagenweise auf A1 legen, Winkel verifizieren). Der Grade reist im DRT mit (`<Body>` am Clip) —
+  bei Projekt-M gemessen: Kurzvideo und Hauptschnitt liefern denselben Look.
+  Nebenwirkung: jeder Import legt eigene `… import N`-Winkelkopien an → zum Schluss in den
+  Bin `Anlegen` verschieben (macht `kurzvideo_import.py` bereits).
+- ⚠️ Liegt ein Clip in zwei Passagen (weil er über eine Passagenlücke reicht), taucht seine `DbId`
+  zweimal im selben Container auf → für die zweite Verwendung **frische DbIds** würfeln. Das ist
+  hier ungefährlich: verboten sind nur neue IDs für **Multicam-Element, Sequence und Container**.
+
+## Wiedergabe-Framerate
+
+- ⭐⭐ **`timelinePlaybackFrameRate` gleich beim Anlegen setzen** — steht sie anders als die
+  Timeline-fps (Standard oft **24** bei einer 29,97-Timeline), klingt der **Ton beim Abspielen
+  schlecht**. ⚠️ **Sobald eine Timeline im Projekt liegt, verweigert die Schnittstelle sie**:
+  `SetSetting` gibt `False` zurück und der Wert bleibt stehen — auf Projekt- UND auf
+  Timeline-Ebene (Resolve 21 geprüft). **In der Oberfläche geht es weiterhin** (normales
+  Eingabefeld): Zahnrad unten rechts bzw. Umschalt+9 → Haupteinstellungen → Timeline-Format →
+  „Wiedergabe-Framerate" → Wert eintippen → Speichern; danach meldet auch `GetSetting` den neuen
+  Wert. Also am besten gleich in denselben Einstellungsblock wie `timelineFrameRate` schreiben,
+  **vor** der ersten Timeline — dann braucht es die Oberfläche gar nicht.
+
 ## Multicam
 
 - ⭐ **Skripte aus einem ALTEN Projektordner kopieren = Fixes fehlen** (09.08.2026, projekt-b4).
@@ -526,3 +614,252 @@ print(d.mean(), d.max(), (d > 3).sum())
 ```
 Im konkreten Fall war die Abweichung an allen fünf Messpunkten **exakt 0** — der OFX-Node war
 wirkungslos und konnte gefahrlos aus. Ohne die Messung wäre das Abschalten ein Blindflug.
+
+## ⛔ `MediaPool.MoveClips` KOPIERT Timelines, es verschiebt sie nicht (20.08.2026, Projekt-O)
+
+Beim Aufräumen (Zwischen-Timelines in den Bin `Anlegen`, s. `vorbild-projekt.md`) liefert
+`mp.MoveClips(clips, ziel)` zwar `True` — danach stehen die Timelines aber **doppelt** im
+Projekt: die Originale bleiben in der Wurzel, im Zielbin liegen **Kopien**.
+Nachweis: `proj.GetTimelineCount()` stieg von 7 auf 11.
+
+**Symptom:** doppelte Timeline-Namen in der Liste, Wurzel wirkt unverändert.
+**Aufräumen:** `mp.DeleteClips(zielbin.GetClipList())` — dann ist der Stand wieder sauber.
+**Ergebnis:** Das Verschieben der Timelines in den Bin `Anlegen` ist derzeit **ein
+Nutzer-Handgriff** (im Media Pool markieren und in den Bin ziehen), kein Skript-Schritt.
+Der Bin selbst (`mp.AddSubFolder(root, "Anlegen")`) wird weiterhin per Skript angelegt.
+
+## SetCDL: Richtung von Slope und Power — gemessen (20.08.2026, Projekt-O)
+
+Einzeln variiert und am **Render** gemessen (Node 1 vor einer LUT-Kette, Rec.709-Material):
+
+| Feld | Richtung |
+|---|---|
+| `Slope` (Gain) | **> 1 = heller** — der wirksame Hebel, wirkt auf das ganze Bild |
+| `Power` (Gamma) | **> 1 = dunkler**, < 1 = heller — wirkt fast nur auf die Mitteltöne |
+
+Wichtig: **nie zwei Werte gleichzeitig ändern und daraus die Richtung ableiten** — genau so
+entstand hier zwischenzeitlich ein falscher Schluss. Für eine Kennlinie ein Feld festhalten,
+das andere in 2–3 Stufen fahren und je einen Frame rendern (`vorlagen/kalib.py`-Muster).
+
+Zweite Falle dabei: `SetRenderSettings({"MarkIn": …})` erwartet **absolute Timeline-Frames
+inkl. Start-TC** (bei 25 fps also 90000 + Position). Ein zu kleiner Wert rendert klaglos eine
+ganz andere Stelle — die Messwerte sind dann untereinander vergleichbar, aber nicht die
+Stelle, die man beurteilen wollte.
+
+## Aufräumen und Clip-Attribute: was per Skript geht und was nur per Bildschirmsteuerung (20.08.2026)
+
+Ergänzung zu den beiden Punkten oben — beides ist **mit Bildschirmsteuerung sauber machbar**,
+nur eben nicht über die API:
+
+- **Timelines in den Bin `Anlegen`**: per Maus **einzeln** aus dem Master-Bin auf den Bin ziehen
+  (`left_mouse_down` auf die Zeile, ein paar Zwischen-`mouse_move`, `left_mouse_up` über dem Bin).
+  Ein vorheriger `left_click` auf dieselbe Stelle wirkt wie ein Doppelklick und **öffnet** die
+  Timeline, statt den Zug zu starten — also direkt mit `left_mouse_down` beginnen.
+  Mehrfachauswahl per Strg+Klick greift nicht zuverlässig; vier einzelne Züge sind schneller
+  als das Debuggen. Nach jedem Zug rutschen die Zeilen nach oben → neu screenshotten.
+- **Halbbilddominanz → Progressiv**: `SetClipProperty('Field Dominance', …)` nimmt nur
+  `Auto`, `Upper Field`, `Lower Field` an — **`Progressive` NICHT**. Auch
+  `Enable Deinterlacing` ist nicht schreibbar (kein Wert wird angenommen). Also Rechtsklick auf
+  den Clip → **Clipeigenschaften…** → Halbbilddominanz → **Progressiv** → OK, je Clip einzeln.
+  ⚠️ Die Position von „Clipeigenschaften…" im Kontextmenü **wandert** (mal 548, mal 563/566 px),
+  je nachdem ob der Eintrag „Benutzung" dabei ist — nach dem Rechtsklick screenshotten.
+  Gegenprüfen per API: `GetClipProperty('Field Dominance')` liefert danach `Progressive`.
+- **3D-LUT-Interpolation → Tetraedrisch**: steht **nicht** in `proj.GetSetting()` (kein Schlüssel
+  dafür). Projekteinstellungen → **Color Management** → ganz unten *Look-up-Tables* →
+  *3D-LUT-Interpolation*.
+- **Node-Kennung (Beschriftung)**: `GetNodeLabel` gibt es, **`SetNodeLabel` nicht**. Setzen per
+  Rechtsklick auf den Node → **Node-Kennung** → Text tippen → Return. Danach überträgt
+  `TimelineItem.CopyGrades()` die Kennung **mit** — also einmal beschriften und auf die übrigen
+  Teile derselben Kamera kopieren.
+- **Nodes im Gruppen-Graphen anlegen**: Node-Modus oben im Node-Panel von `Clip` auf
+  **`Gruppe (nach Clipbearbeitung)`** stellen, Node anklicken, `Alt+S` je weiterem Node.
+  Danach setzt `grp.GetPostClipNodeGraph().SetLUT(i, …)` die LUTs per Skript.
+  Anschließend auf Clip-Ebene `graph.ResetAllGrades()` + `SetCDL(...)`, damit die LUTs nicht
+  doppelt liegen. Gegenprobe: derselbe Prüfframe muss **exakt dieselben** Messwerte liefern
+  wie vor dem Umbau.
+
+## ⚠️ Wiedergabe-Framerate gegen Timeline-Framerate prüfen (20.08.2026)
+
+Bei einem frisch per Skript angelegten 25-fps-Projekt stand die **Wiedergabe-Framerate auf 24**
+(Projekteinstellungen → Haupteinstellungen → Timeline-Format). Das ist die bekannte Ursache für
+verzerrten Ton (Memory `resolve-audio-distortion-playback-framerate`) und fällt beim Anlegen
+leicht durch. `proj.SetSetting('timelinePlaybackFrameRate', '25')` gibt es nicht als Schlüssel —
+also beim Durchgehen der Projekteinstellungen mit erledigen.
+
+## Clip vorn in eine Timeline einfuegen (Kaltstart u.ae.) — per DRT, nicht per GUI
+
+⭐⭐ Zwei Fallen, beide am 24.08.2026 an `Projekt-M Projekt-M` gefunden und geloest:
+
+1. **`Start`-Werte im DRT sind IMMER absolut** (Basis = Timeline-Beginn, ueblich 108000 bei
+   01:00:00:00-Start), **nie 0-basiert relativ zur Timeline.** Ein neu eingefuegter Clip mit
+   `Start=0` liegt vor dem offiziellen Timeline-Anfang und wird beim Import **stillschweigend
+   verworfen** (keine Fehlermeldung, Clipanzahl bleibt einfach unveraendert). Beim Voranstellen
+   eines Clips: neue Bloecke ab `TCBASE` durchzaehlen (nicht ab 0), alle bestehenden Bloecke um
+   die eingefuegte Laenge nach hinten schieben (`Start += laenge`).
+2. **`AddMarker` mit einem ungueltigen Farbnamen scheitert STILL — auf der GANZEN Timeline,
+   nicht nur bei dem einen Aufruf.** `"Orange"` existiert nicht als DaVinci-Markerfarbe; jeder
+   `AddMarker`-Aufruf dahinter (auch auf voellig anderen Objekten/Timelines im selben Lauf)
+   gab `False` zurueck, ohne dass etwas offensichtlich kaputt war. Gueltige Namen (verifiziert):
+   `Blue, Cyan, Green, Yellow, Red, Pink, Purple, Fuchsia, Rose, Lavender, Sky, Mint, Lemon,
+   Sand, Cocoa, Cream`. Bei unklarer Ursache eines flaechendeckenden `AddMarker`-Fehlschlags:
+   zuerst den Farbnamen gegen diese Liste pruefen.
+
+Rezept fuer „Clip X vorn einfuegen, Rest ripple-verschieben" (Vorlage `vorlagen/insert_clip_front.py`,
+aus `kurzvideo_drt.py`s `neue_ids()`/`setz()` wiederverwendet):
+1. Timeline exportieren (`Timeline.Export(pfad, 1)` — **einzeln aufrufen, nicht mehrere Exporte
+   im selben Lauf**, s. u.).
+2. Video- **und** Audio-Blöcke einlesen; die Blöcke finden, deren `In`-Bereich das gewünschte
+   Quellsegment (`[f_in, f_out)`) schneidet.
+3. Für jeden Treffer einen **neuen** Block bauen: `Start` ab `TCBASE` aufsteigend, `Duration`
+   = Schnittmenge, `In` angepasst — **mit den ORIGINAL-DbIds** (nicht neu wuerfeln), weil dieser
+   Block jetzt chronologisch an erster Stelle steht.
+4. Alle bestehenden Blöcke um die eingefügte Länge verschieben (`Start += länge`); nur bei den
+   tatsächlich duplizierten (jetzt zweimal vorkommenden) Original-Blöcken frische DbIds vergeben
+   (`neue_ids()`), sonst kollidieren zwei Elemente mit derselben ID.
+5. Re-importieren, alle vom Import evtl. mitgebrachten Marker per `DeleteMarkerAtFrame` entfernen
+   und **sauber selbst neu setzen** (verschobene alte Marker + ein neuer Marker über den
+   eingefügten Bereich) — sicherer als sich auf automatisch mitgebrachte Marker zu verlassen.
+6. Eingefügte Clips mit `TimelineItem.SetClipColor(farbe)` einfärben (nur die Clips, deren
+   `Start - Timeline.GetStartFrame() < eingefuegte_laenge`).
+7. Alte Timeline umbenennen (z. B. „… (ohne Kaltstart)") und in den Bin `Anlegen` verschieben,
+   neue auf den Originalnamen umbenennen.
+
+⭐ **`Timeline.Export()` ist instabil, wenn mehrere Exporte kurz hintereinander in **einem**
+Python-Prozess laufen — Resolve stuerzt dabei gelegentlich komplett ab** (verifiziert 24.08.2026,
+mehrfach reproduziert). Workaround: **jeden Export als eigenen `py`-Aufruf**, nicht in einer
+Schleife im selben Skript; nach jedem Aufruf kurz pruefen, ob Resolve noch antwortet
+(`scriptapp("Resolve")` liefert `None` sonst), bei Bedarf Resolve neu starten und
+`pm.LoadProject(name)` erneut aufrufen (kein Datenverlust — das Projekt war bereits gespeichert).
+
+## Master-Aufräumen nach DRT-Reimport — pro Name GENAU EIN Eintrag, nicht „alle aktiven"
+
+⭐⭐⭐ Jeder DRT-Reimport (Winkel-Korrektur, Kaltstart-Clip einfügen, jede künftige Änderung
+über den DRT-Weg) dupliziert automatisch den Multicam-Clip UND seine vier Winkel-Timelines
+(`… nah/weit/seite/ton import <N>`). Bei mehreren Kurzvideos entsteht so **je Kurzvideo ein
+eigenes Set** — am 24.08.2026 bei `Projekt-M Projekt-M` sieben Sets gleichzeitig „aktiv" (eines pro
+Kurzvideo + eines für den Hauptschnitt). Der Nutzer musste **dreimal** korrigieren, bis die
+Regel stimmte:
+
+1. Erster Versuch: alles pauschal in einen Unterordner — falsch, brach nichts, aber der
+   Nutzer sah "fehlt jetzt ganz" (0 statt 1 in Master).
+2. Zweiter Versuch: alle *aktuell benutzten* Sets zurück nach Master (7 Stück) — immer noch
+   falsch, weil "aktuell benutzt" nicht dasselbe ist wie "soll in Master sichtbar sein".
+3. Richtig: **in Master steht von jedem Namen nur EIN Eintrag** — der zum Hauptschnitt
+   gehörende (unnumerierte). Jede numerierte Kopie (auch wenn ein Kurzvideo sie technisch
+   noch braucht) gehört in `Alte Versionen`. **Bin-Ort und Funktion sind unabhängig** —
+   `mp.MoveClips` ändert nichts an der Verknüpfung (Multicam-Referenzen laufen über DbId,
+   nicht über den Bin-Pfad), also bricht das Verschieben nichts. Nach dem Verschieben
+   verifiziert: Clip-/Markeranzahl aller sechs Kurzvideos unverändert, Bildprobe scharf und
+   korrekt gegradet.
+
+**Praktisches Muster** (statt einzeln nachzuforschen, welches Set wozu gehört):
+```python
+import re
+MUSTER = re.compile(r"^Projekt-M Projekt-M (Multicam import|nah import|weit import|"
+                     r"seite import|ton import) \d+$")
+treffer = [c for c in root.GetClipList() if MUSTER.match(c.GetName())]
+mp.MoveClips(treffer, alte_versionen_bin)
+```
+Alles mit einer Zahl am Ende raus aus Master — ausnahmslos, ohne zu prüfen, ob es "gerade
+gebraucht" wird. Nur das unnumerierte Original bleibt.
+
+⭐ Falls man **gezielt** wissen will, welche Winkel-Timeline ein bestimmter Multicam-Clip
+benutzt (z. B. um an genau dem Grade eines Kurzvideos zu arbeiten): die Namensnummer des
+Multicam-Clips (`Multicam import 10`) und die seiner Winkel-Timelines (`nah import 23`)
+laufen NICHT synchron — keine Formel. Verifizierter, sicherer Weg (kein Absturzrisiko,
+`Timeline.Export()` dagegen schon, s. o.): Media Pool → Multicam-Clip → Rechtsklick →
+**„In Timeline öffnen"** → auf der **Edit-Seite** (nicht Farbe!) steht der Name der
+Quell-Winkel-Timeline direkt im Clip-Label jeder Spur.
+
+⭐⭐ **Beim Suchen nicht nur die Wurzel von Master prüfen — auch JEDE Unterbin.** Alte
+`Multicam import`-Kopien können sich auch in `Kurzvideos`, `Anlegen` und anderen
+Unterordnern verstecken (Reste aus früheren Sitzungen). Ein Aufräumen, das nur
+`root.GetClipList()` durchsucht, übersieht diese. Richtig: **rekursiv über alle
+Unterordner** nach dem Namensmuster suchen:
+```python
+def alle_clips(folder):
+    out = list(folder.GetClipList())
+    for sub in folder.GetSubFolderList():
+        out += alle_clips(sub)
+    return out
+```
+
+## Stabilisierung eines Kamerawinkels (30.08.2026, Projekt mit 2 Shogun-Kameras)
+
+**Aufgabe:** leichtes Schwanken (Focus-Pro-Motor) rausrechnen, dabei die Bewegung der
+sprechenden Person **erhalten** — also nur eine statische Struktur im Hintergrund festhalten.
+
+⛔ **Der Resolve-Stabilisator kann das nicht.**
+- Voreinstellung (Glättung): praktisch wirkungslos bei langsamem Wandern (gemessen 1,75 → 1,52 px).
+- **Mit „Kamera-Sperre" verfolgt er das falsche Motiv**: er nimmt die Person als dominante
+  Bewegung und schiebt den Hintergrund gegenläufig — gemessen **154 px Drift** statt 2 px.
+  Ein ROI/Bereich lässt sich beim Stabilisator nicht vorgeben.
+
+⛔ **Fusion-Kompositionen per Skript sind hier eine Sackgasse.**
+- Sie wirken zwar (Transform mit `XYPath` + `BezierSpline`-Keyframes, geeicht:
+  `Center.X` = Bildbreite, `Center.Y` = Bildhöhe mit umgekehrtem Vorzeichen; die
+  Keyframe-Achse zählt ab **Clipanfang**),
+- aber auf Clips einer **Multicam-Winkel-Timeline verschwinden sie beim Speichern** (nach
+  `CloseProject`/`LoadProject` ist `GetFusionCompCount()` wieder 0). In normalen Timelines
+  überleben kleine Comps; mit mehreren tausend Keyframes gehen sie ebenfalls verloren.
+- Resolve fror bei diesem Vorgehen zweimal ein (Oberfläche lebt, Skript-Schnittstelle tot,
+  nur Neustart hilft).
+
+✔ **Der Weg, der funktioniert: stabilisierte Zwischendateien + Relink.**
+1. **Messen** (`vorlagen/stabilisierung/bewegung_messen.py`): Feature-Tracking (LK) gegen einen
+   festen Referenzframe, Punkte nur in Boxen mit **statischem Innenraum** — nie die Person,
+   nie etwas hinter dem Fenster (Wind). S-Log3 ist flau → CLAHE. Liefert dx/dy je Frame,
+   subpixelgenau; ~35 fps, weil ffmpeg nur das Fenster um die Struktur liefert.
+2. **Erzeugen** (`vorlagen/stabilisierung/stabil_erzeugen.py`): Bewegung gegenrechnen, Abschnitte
+   an echten Kamerabewegungen trennen und je Abschnitt auf den Median zentrieren, Korrektur
+   begrenzen (±6 px), Zoom 1,0035 gegen leere Ränder. yuv422p10le rein wie raus → ProRes 422,
+   Ton per `-map 1:a -c:a copy`. ⚠️ **Framezahl muss exakt der Quelle entsprechen** (sonst
+   verschiebt sich der Timeline-Inhalt) und außerhalb des Messbereichs den letzten Wert halten.
+3. **Einsetzen ohne jeden Eingriff in Timelines**: neue Dateien mit **denselben Dateinamen** in
+   einen Ordner `<kamera> stabilisiert v1` legen, dann `mp.UnlinkClips([...])` +
+   `mp.RelinkClips([...], ordner)`. Grade, Multicam-Winkel, Schnitt und Marker bleiben
+   unverändert; Zurückschalten ist ein Relink auf den Originalordner.
+4. **Belegen**: den Bereich aus der Winkel-Timeline rendern und mit demselben Messskript prüfen.
+
+**Nebenbefund:** Bei zwei Kameras derselben Aufnahme kann eine völlig ruhig sein — vor jeder
+Stabilisierung erst messen. Hier war k1 mit 0,3–0,8 px (4K) unter der Sichtbarkeitsschwelle;
+nur k2 brauchte die Behandlung.
+
+## ⭐⭐ Bild „wackelt“, obwohl die Kamera stillsteht → „Bildfenster-Weave“ im Film-Look-Erzeuger
+
+**Symptom** (Projekt-N Projekt-N, 30.08.2026): Der Nutzer sieht in der Schnitt-Timeline ein
+leichtes Schwanken nach links und rechts an einem unbeweglichen Gegenstand im Hintergrund
+(hier ein Salzstein). Die **Quelldatei ist aber nachweislich ruhig** — Messung am selben
+Gegenstand: 0,15 px Spanne über 414 Frames in 4K, Max-Minus-Min-Bild zeigt nur Rauschen.
+
+**Ursache:** Der ResolveFX **„Film-Look-Erzeuger“** hat im Abschnitt **„Bildfenster-Weave“**
+(engl. *Gate Weave*, Parameter `gateWeaveIsEnable/Amount/Rate`) eine simulierte Filmfenster-
+Unruhe — und die ist **ab Werk eingeschaltet** (Intensität 0,250, Rate 0,500). Sie verschiebt
+das ganze Bild pro Frame um Bruchteile eines Pixels seitlich. Weil der Parameter auf dem
+Vorgabewert steht, taucht er in der Projekt-DB gar nicht auf — man findet ihn nur in der
+Oberfläche oder daran, dass er fehlt.
+
+**Nachweis-Rezept (misst, statt zu raten):** dieselbe Stelle dreimal messen —
+(a) Quelldatei per ffmpeg nach HD skaliert, (b) aus der **ungegradeten** Quell-Timeline
+gerendert, (c) aus der gegradeten Timeline gerendert. Beim Fall Projekt-N (HD-Pixel, x-Spanne):
+0,06 → 0,19 → **1,03**. Danach Nodes einzeln abschalten (`GetNodeGraph().SetNodeEnabled(n, …)`)
+und neu rendern: mit Node 4 aus fiel der Wert auf 0,09 — mit FilmConvert aus blieb er bei 1,02.
+
+**Behebung:** Farbe-Seite → Node „Film-Look-Erzeuger“ → Einstellungen → Abschnitt
+**Bildfenster-Weave** → Haken **„Bildfenster-Weave aktivieren“ raus**. Ist der Node ein
+**geteilter Node**, wirkt der eine Klick auf alle Clips aller Winkel. Danach `pm.SaveProject()`.
+Ergebnis Projekt-N: x-Spanne je k1-Einstellung von 0,16–0,53 auf 0,13–0,25 HD-Pixel; k2 von
+1,41–1,59 auf 0,54–0,78. Der Look ändert sich sonst nicht (mittlere Abweichung 1,9/255).
+
+**Gleich mitprüfen: Flimmern.** Im selben Plugin ist **`flickerIsEnable`** ebenfalls ab Werk an
+(Intensität 0,15) und moduliert die Helligkeit — gemessen: Helligkeitssprung von Bild zu Bild
+max 0,65 → **0,28** (von 255), nachdem der Haken raus war. Bei Vortrags-/Interviewmaterial
+beide zusammen abschalten.
+
+**Prüfwerkzeug:** `vorlagen/stabilisierung/weave_pruefen.py` liest die Projekt-DB und meldet je
+geteiltem Node, ob Weave und Flimmern an oder aus sind (Parameter stehen dort als ASCII-Hex einer UTF-16-
+Struktur in `ListMgt::LmPowerNode.NodeBA`; clip-eigene Grades in `ListMgt::LmVersion.Body`).
+
+⛔ **Reihenfolge merken:** Bei „das Bild wackelt“ **immer zuerst diesen Haken prüfen**, bevor
+gemessen, stabilisiert oder gar eine Zwischendatei gerechnet wird — sonst stabilisiert man
+eine Unruhe weg, die der Grade danach wieder draufrechnet.

@@ -9,6 +9,7 @@ anpassen, in dieser Reihenfolge laufen lassen.
 | Skript | Anzupassen | Ergebnis |
 |---|---|---|
 | `sync.py` | `ROOT`, `REF` (Hauptton-wav), `CAMS` (Teile in Reihenfolge), `CACHE` | `offsets.json` |
+| `tc_pruefen.py` | keine — Clips als Argumente | Bericht: Timecode-Versatz gegen Ton gemessen (Atomos AirGlu). Erster Clip = Referenz. Siehe `references/timecode-sync.md` |
 | `prep.py` | `ROOT`, `NAME`, `CAMS`, `HAUPTTON`, Pfad zu `offsets.json` | Projekt + Bins + Quell-Timelines |
 | `transcribe.py` | Ton-Pfad, Ausgabepfade | `segments.json`, `words.json` |
 | `make_cutplan.py` | **Leitkamera**, Cutaway-Kameras, Pausen-Schwellen, Zwangswechsel-Dauer | `cut_plan.json` |

@@ -320,3 +320,134 @@ Vollständige Fassung im Memory `resolve-automatisierung-stand` (dort steht der 
   `tl.DeleteClips([item], False)`, inkl. der Falle, dass `SetCurrentTimecode` direkt nach
   `OpenPage` verschluckt wird; (2) **Wirkung eines Nodes messen, bevor man ihn abschaltet**
   (Frame-Differenz an mehreren Stellen statt `GetToolsInNode` zu vertrauen).
+- **20.08.2026 (Projekt-O Frieden Projekt-O):** `fallstricke.md` um zwei gemessene Punkte
+  ergänzt: (1) `MediaPool.MoveClips` **kopiert** Timelines statt sie zu verschieben (Bin
+  `Anlegen` bleibt damit ein Nutzer-Handgriff); (2) Richtung von `SetCDL` **Slope > 1 = heller /
+  Power > 1 = dunkler**, gemessen mit einer Kennlinie (ein Feld festhalten!), dazu die Falle,
+  dass `MarkIn` in `SetRenderSettings` absolute Frames inkl. Start-TC erwartet.
+- **20.08.2026 (Projekt-O, Fortsetzung):** `fallstricke.md` ergänzt um die Bildschirmsteuerungs-Wege
+  für alles, was die API nicht kann: Timelines in den Bin `Anlegen` ziehen (Zug direkt mit
+  `left_mouse_down` beginnen), Halbbilddominanz → Progressiv über *Clipeigenschaften*
+  (`SetClipProperty` nimmt `Progressive` NICHT an), 3D-LUT-Interpolation → Tetraedrisch,
+  Node-Kennung setzen (`SetNodeLabel` fehlt, `CopyGrades` überträgt die Kennung aber mit),
+  Nodes im Gruppen-Graphen per Node-Modus + `Alt+S`. Dazu die Prüfung
+  **Wiedergabe-Framerate = Timeline-Framerate** beim Anlegen (stand auf 24 statt 25).
+
+## 23.08.2026 — Projekt-M (Projekt-M): mehrere Aufnahmeblöcke, 3 Kameras, Kurzvideos
+
+- **Neu in `ablauf.md`** (Schritt 1): Abschnitt „Mehrere Aufnahmeblöcke (Pausen mittendrin)“ —
+  Blockzuordnung, **ein Sync-Offset je Block**, Zeitbasis = zusammenhängend gelegter Hauptton,
+  eine Quell-Timeline je Kamera über alle Blöcke, Verfügbarkeitsprüfung im Schnittplan.
+  Nebeneffekt: der Multicam-Bau braucht dann gar keine Offsets mehr (`OFF = 0`).
+- **Neu in `fallstricke.md`**: `endFrame` ist EXKLUSIV (sonst 1 Frame Lücke je Teil) ·
+  `recordFrame` platziert absolut · Audio-Medien haben keine `Frames`-Eigenschaft ·
+  faster-whisper hängt bei 6 h am Stück → in 10-Minuten-Stücken transkribieren ·
+  `ExportCurrentFrameAsStill` direkt nach dem TC-Sprung liefert ein schwarzes PNG.
+- **3 Angles**: als Muster-DRT eignet sich `resolve-prep\projekt-c\mcbuild\mcschnitt.drt`
+  (4 Angle-Tracks). `build_mc_drt.py` musste nur bei der Kameraerkennung aus dem Clipnamen
+  verallgemeinert werden (`next(c for c in CAMS if nm.endswith(c))`).
+- **Kurzvideos aus dem Hauptfilm**: eigene Timeline je Kurzvideo, gebaut aus den
+  **vorhandenen Multicam-Clips** der Schnitt-Timeline (Grade und Winkel bleiben erhalten,
+  jeder Clip bleibt umschaltbar). Passagengrenzen auf Sprechpausen aus `words.json` einrasten,
+  damit kein Wort angeschnitten wird. Vorlage: `kurzvideos_bauen.py` + `videos.json` im
+  Projektordner Projekt-M.
+
+## 24.08.2026 — Geteilter Weißabgleich-Node pro Winkel (Projekt-M Projekt-M)
+- **Neu:** Node 2 (Weißabgleich + Helligkeit) wird **je Winkel** ein geteilter Node auf allen
+  Clips dieses Winkels. Nutzer-Vorgabe „für immer". Steht als stehende Antwort **4b** in `SKILL.md`.
+- **Verfahren:** 1× Rechtsklick „Als geteilten Node speichern" per Computer-use, danach
+  `TimelineItem.CopyGrades()` auf alle übrigen Clips **desselben** Winkels — überträgt den
+  geteilten Node als dasselbe Objekt (verifiziert: Labels `Shared Node 197/198`).
+- **Damit erledigt:** die Zeile „Shared-Node-Verknüpfung = Mensch" in
+  `kino-look-nodekette.md` ist auf **Claude** umgestellt.
+- **Falle:** DRT-Import der Kurzvideos legt Kopien der Winkel-Timelines an
+  (`… nah import 1…12`). Die müssen die geteilten Nodes mitbekommen, sonst folgen die
+  Kurzvideos späteren Korrekturen nicht.
+- **LUT-Interpolation tetraedrisch geht doch per Claude:** die Projekteinstellungen kennen dafür
+  **keinen** API-Schlüssel (`GetSetting('')` enthält nichts mit „lut/interp"), aber der Weg per
+  Computer-use ist kurz: **Shift+9 → Color Management → Abschnitt „Look-up-Tables" →
+  „3D-LUT-Interpolation" = Tetraedrisch → Speichern**. Damit ist auch diese Zeile in
+  `kino-look-nodekette.md` von „Mensch" auf „Claude" umgestellt.
+
+## 24.08.2026 — Qualitaetspruefung: Kachel-Schaerfe statt Laplace-Median (Projekt-M Projekt-M)
+- Der bisherige Weg (Render + Laplace gegen Kamera-Median) hatte zwei Schwaechen: er brauchte
+  einen kompletten Render, und er meldete bei nahen Einstellungen zu viel. Beides behoben:
+  **direkt aus den Quelldateien messen** und **in zwei Stufen** (Grobfilter Laplace →
+  Feinpruefung Kachel-90%-Quantil). Details in `ablauf.md` Schritt 8.
+- Zahlen Projekt-M: 1242 Einstellungen → 102 auffaellig → 29 reine Bewegung (nach Nutzervorgabe
+  egal) → 73 Schaerfe-Kandidaten → 33 Fehlalarm, 18 grenzwertig, **22 echt unscharf (1,8 %)**.
+- Ersatzwinkel wird gleich mitgemessen; Ergebnis als Marker MIT DAUER (Farbe Sand) im
+  Multicam Schnitt plus Textliste.
+
+## 24.08.2026 — Kaltstart-Vorschlaege aus den Wort-Zeitstempeln
+- `kaltstart.py` + `kaltstart_marker.py` (in `resolve-prep/projekt-m`): staerkster Satz je Video
+  per Phrasensuche in `words.json`, In-/Out-Punkt in die Sprechpause, Marker MIT DAUER in der
+  Kurzvideo-Timeline UND im Hauptschnitt, dazu eine Anleitung als Textdatei.
+- Sound-Frame → Timeline-Frame immer ueber die **Clip-Karte** der Zieltimeline rechnen
+  (`GetLeftOffset` = Tonframe, `GetStart` = Timelineframe) — nie ueber eine Formel.
+
+## 24.08.2026 — Qualitaets-Fixes umgesetzt + Kaltstart-Clips eingefuegt (Projekt-M Projekt-M)
+- Die 22 unscharfen Einstellungen aus der Qualitaetspruefung per DRT-Winkeltausch behoben
+  (Byte-Patch `4b616d657261c2a0` + Winkelziffer, s. `resolve-kino-look-nodekette.md`/
+  `ablauf.md` Multicam-Abschnitt) — im Hauptschnitt UND den drei betroffenen Kurzvideos
+  (#4, #5, #6). Alte Fassungen als „(vor Winkelkorrektur)" im Bin `Anlegen`.
+- Kaltstart-Clips (Bild+Ton) vorn in alle sechs Kurzvideo-Timelines eingefuegt, als eigene
+  gelbe Clips sichtbar. Zwei neue Fallstricke dabei gefunden und in `fallstricke.md`
+  dokumentiert: **Start-Werte im DRT sind absolut, nicht 0-basiert** (führte zu stillschweigend
+  verworfenen Clips), und **ein ungueltiger AddMarker-Farbname ("Orange") legt ALLE folgenden
+  AddMarker-Aufrufe lahm**, nicht nur den einen. Alte Fassungen als „(ohne Kaltstart)" im Bin
+  `Anlegen`.
+- `Timeline.Export()` mehrfach im selben Python-Prozess bringt Resolve gelegentlich zum
+  Absturz — jeden Export als eigenen Prozessaufruf, s. `fallstricke.md`.
+
+## 24.08.2026 — Master-Aufräumen korrigiert: aktuelle Kopie bleibt oben
+- Erster Aufräum-Versuch hatte ALLE `nah/weit/seite/ton import*`-Winkel-Timelines
+  pauschal in einen Unterordner verschoben — Nutzer: „fehlt jetzt in Master".
+- Zweiter Versuch: alle 7 *aktuell genutzten* Sets (Multicam-Clip + vier Winkel-Timelines
+  je Kurzvideo + Hauptschnitt) zurück nach Master geholt — immer noch falsch, Nutzer sah
+  weiterhin „zehn Versionen von weit import" in Master.
+- **Dritter, richtiger Versuch:** in Master steht pro Name IMMER nur EIN Eintrag — der
+  unnumerierte, zum Hauptschnitt gehörende. Jede numerierte Kopie (auch technisch von
+  einem Kurzvideo gebraucht) wandert nach `Alte Versionen`. Bin-Ort und Funktion sind
+  unabhängig (Multicam-Referenzen laufen über DbId) — nach dem Verschieben verifiziert:
+  alle sechs Kurzvideos unverändert (Clip-/Markeranzahl gleich, Bildprobe scharf/korrekt
+  gegradet). Master jetzt exakt 12 Clips (7 Timelines + 1 Multicam + 4 Winkel-Timelines).
+  Regel dreimal verschärft in `SKILL.md` (8a-2) und `fallstricke.md` festgehalten, inkl.
+  Namensmuster-Skript und des Wegs, bei Bedarf die Winkel-Timeline eines bestimmten
+  Multicam-Clips zu finden (Rechtsklick → „In Timeline öffnen" → Edit-Seite).
+
+## 29.08.2026 — Markierungs-Timeline (Vollmaterial, nur farbig markiert)
+
+Neue Vorlagen `vorlagen/markier_drt.py` + `vorlagen/markier_import.py` (entstanden an
+Projekt-N Projekt-N). Zweck: eine **echte Multicam-Timeline über das GESAMTE Material**,
+in der nichts geschnitten oder entfernt wird — die Passagen sind nur **an ihren Grenzen
+unterteilt und farbig markiert** (Grün = Kurzversion, Blau = Langversion, farblos = ungenutzt),
+dazu Marker mit Dauer als Balken im Lineal. Passt zur Regel „nicht-destruktiv markieren".
+
+Bauweise wie bei den Kurzvideos: Hauptschnitt als DRT exportieren, die Clipblöcke als **Muster
+je Winkel** verwenden (FieldsBlob unverändert = Winkel bleibt erhalten), neue DbIds, `Start`/
+`Duration`/`In` neu rechnen, Lücken zwischen den Passagen als Angle-1-Segmente auffüllen.
+Vorteil dieser Bauweise: **Timeline-Zeit = Tonzeit** (lückenlos über die volle Länge), also
+lässt sich jede Fundstelle direkt im Transkript wiederfinden — anders als im gestauchten Schnitt.
+
+Zwei Fallen dabei:
+- **Der importierte Timeline-Name wird ignoriert** (`timelineName` im ImportTimelineFromFile-
+  Dict): Resolve nennt sie „<Quelle> import". Danach `tl.SetName(...)` aufrufen.
+- **Marker des Muster-DRT kommen mit** und sitzen in der falschen Zeitbasis →
+  nach dem Import mit `DeleteMarkerAtFrame` entfernen.
+
+## 30.08.2026 — „Wackler“ kam aus dem Grade, nicht aus der Kamera (Bildfenster-Weave)
+
+Bei Projekt-N Projekt-N meldete der Nutzer ein seitliches Schwanken an einem festen
+Gegenstand im ersten Stück des Multicam-Schnitts. Drei unabhängige Messungen an der Quelldatei
+zeigten aber ein völlig ruhiges Bild (0,15 px Spanne in 4K, Max-Minus-Min nur Rauschen).
+Der Vergleich Quelle → ungegradet aus Resolve → gegradet (0,06 / 0,19 / 1,03 HD-Pixel) und
+anschließendes Einzeln-Abschalten der Nodes wies den ResolveFX **Film-Look-Erzeuger** als
+Urheber nach: dessen **Bildfenster-Weave** ist ab Werk eingeschaltet.
+
+Aufgenommen: `fallstricke.md` (Abschnitt „Bild wackelt, obwohl die Kamera stillsteht“) mit
+Nachweis-Rezept und Behebung; neues Prüfskript `vorlagen/stabilisierung/weave_pruefen.py`
+(liest den Zustand aus der Projekt-DB, auch für geteilte Nodes). Warnung ebenfalls im Skill
+`resolve-kino-look-nodekette` (SKILL.md, referenzen/fallstricke.md, referenzen/film-look-erzeuger.md).
+
+**Merksatz:** Bei „das Bild wackelt“ zuerst den Haken prüfen, dann erst messen oder stabilisieren.

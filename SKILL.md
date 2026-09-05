@@ -1,6 +1,6 @@
 ---
 name: resolve-projekt
-description: DaVinci-Resolve-Filmprojekt für wunder-media anlegen und bearbeiten — Rohdaten sichten, Ton-Sync per Kreuzkorrelation, Projekt/Bins/Quell-Timelines per Python-API, Auto-Multicam-Schnitt aus Whisper-Transkript, Grading-Kette. Nutzen bei "neues Projekt anlegen", "Kameras synchronisieren", "Schnitt vorbereiten", "Multicam bauen", sowie generell wenn Resolve per Skript statt per Maus gesteuert werden soll (rctl.py, grade-set, Nodes, LUTs, Titel-Vorspann).
+description: DaVinci-Resolve-Filmprojekt für wunder-media anlegen und bearbeiten — Rohdaten sichten, Ton-Sync per Kreuzkorrelation oder Timecode (Atomos AirGlu), Projekt/Bins/Quell-Timelines per Python-API, Auto-Multicam-Schnitt aus Whisper-Transkript, Grading-Kette. Nutzen bei "neues Projekt anlegen", "Kameras synchronisieren", "Timecode einrichten", "AirGlu", "Schnitt vorbereiten", "Multicam bauen", sowie generell wenn Resolve per Skript statt per Maus gesteuert werden soll (rctl.py, grade-set, Nodes, LUTs, Titel-Vorspann).
 ---
 
 # Resolve-Filmprojekt anlegen (wunder-media)
@@ -27,10 +27,15 @@ nehmen, nicht neu erfinden.** Arbeitsordner pro Projekt: `C:\claude\resolve-prep
    Soll-Zustand der Mediathek (inkl. Bin **`Anlegen`**), der bewährte Farb-Ablauf und die
    **Grenze Claude ↔ Mensch**. Bei jedem Multicam-Projekt lesen — beschreibt genau den
    Stand, bis zu dem Claude selbstständig anlegt.
-6. `references/grafik-einblendungen.md` — **Schritt 9**: Infografiken/Overlays einbauen und
+6. `references/timecode-sync.md` — **Variante zu Schritt 2**: Kameras laufen über
+   Atomos **AirGlu** mit gemeinsamem Timecode → Offsets direkt aus den Dateien statt
+   Kreuzkorrelation. Enthält die Geräte-Einrichtung (Server/Client, Region **Europe**,
+   die Falle „Source hängt auf HDMI") und die Pflicht-Gegenprobe `vorlagen/tc_pruefen.py`.
+   Lesen, wenn die Rohdaten von Shogun/Ninja Ultra kommen und Timecode tragen.
+7. `references/grafik-einblendungen.md` — **Schritt 9**: Infografiken/Overlays einbauen und
    das Video ausliefern (YouTube-Lang + Instagram-Kurz). Bei Vortrags-/Interview-Reihen
    mit wiederkehrendem Referenten immer lesen, bevor Grafiken gebaut werden.
-7. `vorlagen/` — lauffähige Vorlagen-Skripte (aus Projekt-B, dem saubersten Projekt).
+8. `vorlagen/` — lauffähige Vorlagen-Skripte (aus Projekt-B, dem saubersten Projekt).
    Kopieren nach `C:\claude\resolve-prep\<kurzname>\`, Kopf-Konstanten anpassen, laufen lassen.
    `overlay_tools.py` läuft direkt (check / zoomsafe / mov / place).
 
@@ -40,10 +45,12 @@ nehmen, nicht neu erfinden.** Arbeitsordner pro Projekt: `C:\claude\resolve-prep
 |---|---------|----------|
 | 1 | Rohdaten sichten (ffprobe: Kameras, Teile, fps, Ton-Kanäle, Log/Rec709) | `references/ablauf.md` |
 | 2 | Ton-Sync gegen Hauptton (Tascam/dr10L), Offsets als JSON | `vorlagen/sync.py` |
+| 2b | **Bei Atomos-Rekordern mit AirGlu: Offsets direkt aus dem Timecode** statt Kreuzkorrelation — vorher mit `tc_pruefen.py` belegen | `references/timecode-sync.md`, `vorlagen/tc_pruefen.py` |
 | 3 | Projekt + Bins + Import + Quell-Timeline je Kamera | `vorlagen/prep.py` |
 | 4 | Transkript (faster-whisper large-v3, CUDA) | `vorlagen/transcribe.py` |
 | 5 | Auto-Schnittplan aus Sprechpausen (**ruhige Parameter, s. u.**) | `vorlagen/make_cutplan.py` |
 | 6 | Schnitt-Timeline. **Bei ≥2 Kameras IMMER Multicam-mit-Schnitten — Multicam-Clip per DRT-Bau, NICHT per GUI** | `vorlagen/mcbuild/build_mc_drt.py` |
+| 6b | **Bild-Ton-Probe (Pflicht):** die Schnitt-Timeline ist gegenueber der Tonzeit GESTAUCHT (uebersprungene Stellen ohne Bild) - Ton stueckeln, dann messen | vorlagen/sync_pruefen.py |
 | 7 | Verifizieren (Lücken, Überlappungen, Winkel, **Schwarzbild-Render**), dann Grading (Skill `resolve-kino-look-nodekette`, **geteilte Nodes**) | `vorlagen/verify_cut.py`, `references/farbgebung.md` |
 | 8 | Nachbearbeiten: **richtigen Anfang finden, Organisatorisches raus, verwackelte/unscharfe Winkel tauschen**; Titel-Vorspann (Overlay) | `references/ablauf.md` |
 | 8b | **Aufräumen + Übergabe:** Zwischen-Timelines in den Bin **`Anlegen`**, Soll-Zustand gegen das Vorbild prüfen | `references/vorbild-projekt.md` |
@@ -100,6 +107,22 @@ fertigen, gegradeten Multicam-Schnitt mit Titel **selbstständig** an.
 1. **≥2 Kameras → IMMER die geschnittene Multicam liefern** (echter Multicam-Clip per DRT-Bau,
    `vorlagen/mcbuild/`), damit der Nutzer beim Bearbeiten jeden Clip auf eine andere Kamera umschalten
    kann. Nicht mehr fragen „Nesting oder Multicam".
+   ⭐⭐ **Das gilt auch für JEDES abgeleitete Video** — Kurzfassung, Ausschnitt, Arbeitskopie,
+   Instagram-Fassung (Nutzer, 23.08.2026, ausdrücklich): Sie müssen **echte Multicam-Timelines mit
+   den Winkeln des Hauptschnitts** sein, sonst kann der Nutzer beim Feinschnitt keine Einstellung
+   mehr austauschen. ⛔ **`AppendToTimeline` mit dem Multicam-Clip reicht NICHT** — dabei landen zwar
+   Multicam-Clips in der Zieltimeline, aber **alle auf Angle 1**; die Winkelwahl ist weg. Der Winkel
+   steht nur im `FieldsBlob` des Clips und ist per API nicht setzbar. Richtiger Weg:
+   `vorlagen/kurzvideo_drt.py` + `vorlagen/kurzvideo_import.py` (Hauptschnitt als DRT exportieren,
+   Clips der gewünschten Passagen mit **unverändertem FieldsBlob** übernehmen, `Start`/`Duration`/`In`
+   neu rechnen, importieren; Ton danach passagenweise per API auf A1). Der Grade kommt im DRT mit.
+1b. ⭐⭐ **Wiedergabe-Framerate = Timeline-Framerate — SOFORT beim Anlegen setzen** (Nutzer,
+   23.08.2026). `proj.SetSetting("timelinePlaybackFrameRate", "<fps>")` gehört in denselben
+   Einstellungsblock wie `timelineFrameRate`, **bevor** die erste Timeline entsteht. Steht sie falsch
+   (Standard oft **24**), klingt der Ton beim Abspielen schlecht — und **sobald eine Timeline im
+   Projekt liegt, verweigert `SetSetting` die Änderung** (`False`, auch auf Timeline-Ebene). In der
+   Oberfläche geht es dann noch: Zahnrad unten rechts → Haupteinstellungen → Timeline-Format →
+   „Wiedergabe-Framerate" eintippen → Speichern. Beim Anlegen mitsetzen erspart diesen Umweg.
 2. **Look — der Standard steht fest, Richtung NICHT erfragen, einfach bauen** (Nutzer,
    18.08.2026). Einzelheiten und die Kamera-Prüfung: `references/farbgebung.md`.
    - ⭐ **Standard: Skill `resolve-kino-look-nodekette`** — die 4-Node-Kette
@@ -125,6 +148,43 @@ fertigen, gegradeten Multicam-Schnitt mit Titel **selbstständig** an.
    Look-Nodes (ARRI-Wandlung, Filmstock, Kino) als geteilte Nodes anlegen, damit eine Änderung auf
    ALLE Clips/Kameras wirkt. Nur kamera-spezifische Korrekturen (z. B. Angleich weit→nah) bleiben
    lokal. Details in `references/ablauf.md`/`fallstricke.md`.
+4b. ⭐⭐ **Weißabgleich-Node: pro Winkel EIN geteilter Node — immer so anlegen** (Nutzer,
+   24.08.2026, ausdrücklich „bitte für immer merken"). Der regelbare Node 2
+   („Weissabgleich + Helligkeit") wird **je Winkel** zu einem **geteilten Node**, der auf
+   **allen Clips dieses Winkels** sitzt — dann ändert eine Korrektur den ganzen Winkel auf einmal.
+   Winkel-übergreifend wird er **nicht** geteilt (jeder Winkel hat eigene Werte).
+   Die Look-Nodes 1/3/4 sind ohnehin geteilt.
+   **Rezept (verifiziert 24.08.2026 an Projekt-M Projekt-M, 3 Winkel × 21/22 Clips):**
+   1. In der `… import`-Timeline des Winkels auf einen Referenzclip fahren
+      (`SetCurrentTimeline` + `SetCurrentTimecode`, `OpenPage("color")`).
+   2. **Ein einziger Computer-use-Klick:** Rechtsklick auf Node 2 →
+      **„Als geteilten Node speichern"**. (Die API kann das nicht; ein Klick ist zumutbar.)
+   3. Alles Weitere per Skript: `refItem.CopyGrades(alle_anderen_Clips_des_Winkels)` —
+      `CopyGrades` überträgt geteilte Nodes als **dasselbe** Objekt, das Label wird überall
+      `… Shared Node <n>`. Das gilt auch **timeline-übergreifend**: die Kopien der
+      Winkel-Timelines, die beim DRT-Import der Kurzvideos entstehen
+      (`… nah import 1…12`), im selben Zug mitversorgen, sonst hängen die Kurzvideos an
+      einem alten, nicht mitgeführten Grade.
+   4. Prüfen: Node-Labels auslesen (alle gleich?) und je Winkel einen Frame messen.
+   5. **Gleich mit erledigen:** LUT-Interpolation auf **tetraedrisch** stellen — Shift+9 →
+      Color Management → „Look-up-Tables" → „3D-LUT-Interpolation" → Speichern (kein API-Schlüssel).
+
+4c. ⭐ **Unbenutzte Shared-Node-Kopien am Ende wieder löschen** (Nutzer, 27.08.2026, für immer).
+   Jedes Anwenden einer DRX/Look-Kette, die geteilte Nodes enthält, legt in der Shared-Node-Liste
+   einen **neuen** Eintrag an, statt den vorhandenen zu benutzen — bei clipweisem Anwenden also
+   eine Kopie **pro Clip** (Projekt-M Projekt-M: 198 Einträge, davon nur 12 benutzt, 186 Karteileichen,
+   alle byte-identisch). Bild bleibt richtig, aber die Liste wird unbrauchbar und die Projekt-DB
+   wächst.
+   - **Vermeiden:** Kette einmal anlegen und die Clips per `CopyGrades`/Farbgruppe anhängen
+     (Rezept 4b), statt die DRX auf jeden Clip einzeln anzuwenden.
+   - **Aufräumen (ohne Rückfrage einplanen, aber vorher messen):**
+     1. Benutzte Namen sammeln: über **alle** Timelines je Clip
+        `item.GetNodeGraph().GetNodeLabel(i)` — das Label ist der Name des geteilten Nodes.
+     2. Registry lesen: Tabelle `ListMgt::LmPowerNode` in der Projekt-DB
+        (`…\Resolve Project Library\…\Projects\<name>\Project.db`, WAL-Dateien mitkopieren).
+     3. Alles, was in 1. nicht vorkommt, ist Karteileiche → in der GUI über die Shared-Node-Liste
+        löschen (Rechtsklick). **Benutzte niemals löschen** — sonst bricht der Grade.
+
 5. **Andere Kameras an die Leitkamera angleichen** (per Korrektur-Node-Werten, nicht per LUT).
 6. **Titeltext** aus Ordnername ableiten (Name + Bezeichnung; Datum + Ort, meist „München") und nur
    **inhaltlich gegenprüfen** lassen — nicht die ganze Titel-Prozedur erfragen.
@@ -153,6 +213,33 @@ fertigen, gegradeten Multicam-Schnitt mit Titel **selbstständig** an.
    nur wegräumen. **Oben bleiben** die `… import`-Timelines (tragen den Grade, sind die
    Multicam-Winkel), `Multicam Schnitt`, der `Multicam`-Clip und `Multicam Auswahl`.
    Befehl + Soll-Zustand der Mediathek: `references/vorbild-projekt.md`.
+8a-2. ⭐⭐⭐ **In Master steht von jedem Namen (auch von technischen Zwischen-Objekten)
+   IMMER nur EIN Eintrag — nicht „alle, die gerade aktiv gebraucht werden".**
+   (Nutzer, 24.08.2026, nach dreimaliger Korrektur ausdrücklich „für immer merken".)
+   Erste Fassung dieser Regel war zu lasch: sie ließ *alle* aktuell benutzten Kopien
+   (z. B. sieben verschiedene `… weit import <N>`, je eine pro Kurzvideo + Hauptschnitt)
+   in Master stehen, weil sie ja „alle gerade gebraucht" werden. **Das war falsch.**
+   Bin-Ort und Funktion sind unabhängig: `mp.MoveClips` ändert nichts an der internen
+   Verknüpfung (Multicam-Referenzen laufen über DbId, nicht über den Bin-Pfad) — deshalb
+   darf und soll in Master **grundsätzlich nur die EINE Kopie sichtbar bleiben, die zum
+   Hauptschnitt (`Multicam Schnitt`) gehört** (die unnumerierte: `nah/weit/seite/ton
+   import`, `Multicam import`). **Jede numerierte Kopie** (`… import 10`, `… import 23`
+   usw.) — auch wenn sie von einem der sechs Kurzvideos aktiv gebraucht wird — gehört in
+   den Unterordner `Alte Versionen`. Die Kurzvideos funktionieren danach unverändert
+   weiter (verifiziert: Clip-/Markeranzahl unverändert, Bildprobe scharf und korrekt
+   gegradet) — nur eben nicht mehr sichtbar in Master.
+   **Praktisch:** nach jedem DRT-Reimport (Winkel-Korrektur, Kaltstart, künftige
+   Änderungen) per Namensmuster `^Projekt-M Projekt-M (Multicam import|nah import|weit
+   import|seite import|ton import) \d+$` **alles mit einer Zahl am Ende** aus Master in
+   den Unterordner verschieben — ausnahmslos, unabhängig davon, ob es technisch noch
+   gebraucht wird.
+   ⚠️ **Dabei nicht nur die Wurzel von Master durchsuchen, sondern REKURSIV alle
+   Unterordner** (`Kurzvideos`, `Anlegen`, …) — dort können sich weitere alte Kopien
+   desselben Namens verstecken, die beim Aufräumen sonst übersehen werden.
+   ⭐ Falls man wissen will, welche Winkel-Timeline ein bestimmter Multicam-Clip benutzt
+   (z. B. zum gezielten Nachbearbeiten): Media Pool → Multicam-Clip → Rechtsklick →
+   **„In Timeline öffnen"** (sicher, kein Absturzrisiko) → auf der **Edit-Seite** (nicht
+   Farbe-Seite!) zeigt jede Spur den Namen ihrer Quell-Winkel-Timeline im Clip-Label.
 8b. **Grenze Claude ↔ Mensch** (Nutzer, 04.08.2026): Claude zieht alles durch, was per Skript
    geht — aber **Arbeiten, für die Claude deutlich länger braucht als ein Mensch, macht der
    Mensch** (Qualifizierer/Power Window, Shared-Node-Verknüpfung, Node-Beschriftung,
